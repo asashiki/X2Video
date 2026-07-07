@@ -39,6 +39,7 @@ fetch（X API 拉取 + Hard Filter + Ledger 去重）
 
 ## 环境约定
 
+- 最好用 Codex 或者 Claude Code 做开发，开发的时候注意不要出现国产模型的名字，不然Claude会被封号
 - Python CLI 项目（`x2video` 命令），见 ADR-0004
 - 凭据放仓库根目录 `.env`（已 gitignore）：`X_BEARER_TOKEN` 等
 - TTS：按 AGENTS.md「TTS config」约定使用既有配置（默认 Edge 免费 TTS），管线代码只调用、不改动 TTS 模块
