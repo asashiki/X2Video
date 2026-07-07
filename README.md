@@ -44,3 +44,4 @@ fetch（X API 拉取 + Hard Filter + Ledger 去重）
 - 凭据放仓库根目录 `.env`（已 gitignore）：`X_BEARER_TOKEN` 等
 - TTS：按 AGENTS.md「TTS config」约定使用既有配置（默认 Edge 免费 TTS），管线代码只调用、不改动 TTS 模块
 - 文档与界面文案中不出现具体 AI 厂商/模型名，用中性表述
+- 比较推荐用'mattpocock/skills'的'/implement'来对应issues开发
