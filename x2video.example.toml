@@ -1,0 +1,51 @@
+# X2Video configuration
+# Copy this file to x2video.toml and adjust to your needs.
+# Secrets (API keys, tokens) belong in .env, NOT in this file.
+
+# Domain keywords for topic filtering (used during fetch)
+domain_keywords = ["AI", "artificial intelligence", "machine learning", "LLM"]
+
+[hard_filter]
+# Time window for fetching recent tweets (hours)
+time_window_hours = 24
+# Minimum engagement thresholds — candidates below these are dropped
+min_likes = 100
+min_retweets = 10
+min_replies = 0
+views_threshold = 0
+
+[curation]
+# Number of top-scored candidates to pick per digest
+top_n = 5
+# Gate 1: true = wait for user confirmation, false = fully automatic
+blocking_mode = true
+# Maximum candidates sent to the LLM for scoring
+max_candidates = 50
+
+[llm]
+# Provider: "api" for any API-compatible chat completion endpoint
+provider = "api"
+# Base URL of the API endpoint (trailing v1 path)
+api_base_url = ""
+# Model name — use whatever your provider supports
+model = ""
+# API key: set via X2VIDEO_LLM_API_KEY env var or .env, NOT here
+api_key = ""
+timeout_seconds = 60
+max_tokens = 4096
+temperature = 0.7
+
+[tts]
+# Provider: "edge" (free, no API key) or "api" (external service)
+provider = "edge"
+voice = "zh-CN-XiaoxiaoNeural"
+rate = "+0%"
+volume = "+0%"
+pitch = "+0Hz"
+# The fields below are only used when provider == "api"
+api_base_url = ""
+api_key = ""        # set via X2VIDEO_TTS_API_KEY env var or .env, NOT here
+api_model = ""
+api_voice = ""
+api_format = "mp3"
+api_timeout_seconds = 60

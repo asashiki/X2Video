@@ -37,6 +37,53 @@ fetch（X API 拉取 + Hard Filter + Ledger 去重）
   → final/（人工审片上传，Gate 2）
 ```
 
+## 开发环境
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/asashiki/X2Video.git
+cd X2Video
+
+# 2. 创建虚拟环境（Python >= 3.11）
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# 3. 安装项目（可编辑模式）
+pip install -e .
+
+# 4. 验证
+x2video --help
+```
+
+## 配置
+
+### 创建配置文件
+
+```bash
+cp x2video.example.toml x2video.toml
+# 按需编辑：领域关键词、互动门槛、LLM 服务地址、TTS 方案等
+```
+
+### 配置文件查找顺序
+
+1. `--config` / `-c` 命令行参数
+2. `X2VIDEO_CONFIG` 环境变量
+3. 当前目录下的 `x2video.toml`
+4. `~/.config/x2video/config.toml`
+
+### 密钥与私密信息
+
+API key 等私密信息不写入 TOML，通过 `.env` 或环境变量注入（`X2VIDEO_` 前缀）：
+
+```bash
+# .env 文件（仓库根目录）
+X2VIDEO_LLM_API_KEY=sk-...
+X2VIDEO_TTS_API_KEY=...
+
+# 或者直接 export
+export X2VIDEO_LLM_API_BASE_URL=https://api.example.com/v1
+```
+
 ## 环境约定
 
 - 最好用 Codex 或者 Claude Code 做开发，开发的时候注意不要出现国产模型的名字，不然Claude会被封号

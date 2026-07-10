@@ -1,3 +1,7 @@
+# IDE / Editor
+.vscode/
+.claude/settings.local.json
+
 # Secrets
 .env
 
