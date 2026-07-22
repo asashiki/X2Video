@@ -102,6 +102,7 @@ def _toml_to_nested(raw: dict) -> dict:
         "curation": {},
         "llm": {},
         "tts": {},
+        "source": {},
     }
     for key, value in raw.items():
         if key in sub_tables:
