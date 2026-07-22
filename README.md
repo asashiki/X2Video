@@ -71,6 +71,37 @@ cp x2video.example.toml x2video.toml
 3. 当前目录下的 `x2video.toml`
 4. `~/.config/x2video/config.toml`
 
+### 数据源：X MCP 或 SuperGrok 订阅
+
+管线的 fetch 阶段支持可替换的数据源（见 ADR-0001）：
+
+| `source.provider` | 鉴权方式 | 计费 |
+| --- | --- | --- |
+| `x_mcp`（默认） | X Developer Portal Bearer token（`X_BEARER_TOKEN`） | X API 按量 |
+| `grok` | 浏览器 OAuth 登录 SuperGrok / X Premium+ | 订阅 token 额度 |
+
+**用 SuperGrok 订阅拉 X 热点（推荐本地先试）：**
+
+```bash
+# 1. 浏览器授权（与 Grok Build 同类的 loopback OAuth）
+x2video auth login
+# 终端会打开 accounts.x.ai 授权页；浏览器已登录 Grok 时点「允许」即可
+
+# 2. 查看会话状态 / 退出
+x2video auth status
+x2video auth logout
+
+# 3. 配置数据源
+# 在 x2video.toml:
+#   [source]
+#   provider = "grok"
+
+# 4. 拉取候选推文（消耗的是 SuperGrok 订阅 token，不是 X API）
+x2video fetch -k AI -k LLM
+```
+
+OAuth 凭证落在 `~/.config/x2video/grok_auth.json`（本地权限 600），access token 会自动 refresh。
+
 ### 密钥与私密信息
 
 API key 等私密信息不写入 TOML，通过 `.env` 或环境变量注入（`X2VIDEO_` 前缀）：
@@ -83,6 +114,8 @@ X2VIDEO_TTS_API_KEY=...
 # 或者直接 export
 export X2VIDEO_LLM_API_BASE_URL=https://api.example.com/v1
 ```
+
+SuperGrok OAuth **不要**把 token 写进 `.env`；一律走 `x2video auth login`。
 
 ## 环境约定
 

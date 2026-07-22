@@ -18,7 +18,7 @@ inside each subcommand, not here.
 
 import typer
 
-from x2video.cli import fetch, curate, card, script, render, run
+from x2video.cli import auth, fetch, curate, card, script, render, run
 from x2video.config.loader import load_config
 
 app = typer.Typer(
@@ -39,9 +39,18 @@ def main(
     ),
 ) -> None:
     """X2Video — automated pipeline from tweets to publish kit."""
+    # Auth subcommands do not need a full config (and should work pre-setup).
+    if ctx.invoked_subcommand == "auth":
+        ctx.obj = None
+        return
     ctx.obj = load_config(config)
 
 
+app.add_typer(
+    auth.app,
+    name="auth",
+    help="Login / logout SuperGrok subscription (browser OAuth)",
+)
 app.add_typer(fetch.app, name="fetch", help="Fetch candidates from X and apply hard filters")
 app.add_typer(curate.app, name="curate", help="Score candidates via LLM curation and select picks")
 app.add_typer(card.app, name="card", help="Render bilingual tweet cards")

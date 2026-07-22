@@ -5,6 +5,17 @@
 # Domain keywords for topic filtering (used during fetch)
 domain_keywords = ["AI", "artificial intelligence", "machine learning", "LLM"]
 
+# Candidate data source (ADR-0001 — replaceable)
+#   "x_mcp" — X official MCP + Bearer token (X_BEARER_TOKEN in .env)
+#   "grok"  — SuperGrok / X Premium+ OAuth + X Search
+#             (run `x2video auth login` first; bills subscription tokens)
+[source]
+provider = "x_mcp"
+# model / api_base only used when provider = "grok"
+model = "grok-4-1-fast-reasoning"
+api_base = "https://api.x.ai/v1"
+timeout_seconds = 120
+
 [hard_filter]
 # Time window for fetching recent tweets (hours)
 time_window_hours = 24

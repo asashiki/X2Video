@@ -71,6 +71,22 @@ class TTSConfig(BaseModel):
     api_timeout_seconds: int = 60
 
 
+class SourceConfig(BaseModel):
+    """Candidate data-source configuration (replaceable per ADR-0001).
+
+    Providers:
+      - ``x_mcp``: X official MCP with app-only Bearer token (issue #1)
+      - ``grok``: SuperGrok / X Premium+ browser OAuth + X Search tool
+        (bills subscription token quota; run ``x2video auth login`` first)
+    """
+
+    provider: str = "x_mcp"
+    # Used by provider=grok — model name on the subscription API
+    model: str = "grok-4-1-fast-reasoning"
+    api_base: str = "https://api.x.ai/v1"
+    timeout_seconds: int = 120
+
+
 class X2VideoConfig(BaseModel):
     """Root configuration — single source of truth for all tunable parameters."""
 
@@ -84,5 +100,6 @@ class X2VideoConfig(BaseModel):
     curation: CurationConfig = CurationConfig()
     llm: LLMConfig = LLMConfig()
     tts: TTSConfig = TTSConfig()
+    source: SourceConfig = SourceConfig()
     work_dir: str = "work"
     final_dir: str = "final"
