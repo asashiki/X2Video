@@ -4,17 +4,20 @@ from pathlib import Path
 
 import typer
 
+from x2video.cli.common import die, run_async
+from x2video.pipeline.render import run_render
+
 app = typer.Typer(help="Synthesize TTS audio and compose final MP4")
 
 
 @app.callback(invoke_without_command=True)
 def render(
     ctx: typer.Context,
-    script_file: Path = typer.Option(
-        Path("work/script.md"), "--script", "-s", help="Path to narration script"
+    script_file: Path | None = typer.Option(
+        None, "--script", "-s", help="Path to narration script JSON"
     ),
-    cards_dir: Path = typer.Option(
-        Path("work/cards"), "--cards", help="Directory containing rendered card images"
+    cards_dir: Path | None = typer.Option(
+        None, "--cards", help="Directory containing rendered card images"
     ),
     output_dir: Path | None = typer.Option(
         None,
@@ -22,9 +25,27 @@ def render(
         "-o",
         help="Publish kit output directory (default: final/<timestamp>)",
     ),
+    date: str | None = typer.Option(None, "--date", help="Run date YYYY-MM-DD (default: today)"),
 ) -> None:
     """Synthesize TTS audio from script, then compose cards + audio + subtitles
     into a 1080x1920 MP4 publish kit."""
     cfg = ctx.obj
-    od = output_dir or Path(cfg.final_dir) / "<timestamp>"
-    typer.echo(f"render: stub — script={script_file}, cards={cards_dir}, output={od}")
+    try:
+        result = run_async(
+            run_render(
+                cfg,
+                date=date,
+                script_path=script_file,
+                cards_dir=cards_dir,
+                output_dir=output_dir,
+            )
+        )
+    except Exception as exc:
+        die(f"render failed: {exc}")
+    typer.secho(
+        f"render: Publish Kit → {result['kit_dir']}",
+        fg=typer.colors.GREEN,
+    )
+    typer.echo(f"  video: {result['video']}")
+    typer.echo(f"  cover: {result['cover']}")
+    typer.echo(f"  copy:  {result['publish_md']}")

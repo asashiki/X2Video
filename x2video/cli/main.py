@@ -1,25 +1,17 @@
 """X2Video CLI entry point.
 
-Mounts the six pipeline subcommands under a single Typer app.
-
-Error handling convention (to be implemented as pipeline stages go live):
-    try:
-        cfg = load_config(config)
-    except FileNotFoundError:
-        rich.print("[red]Config file not found.[/red]")
-        raise typer.Exit(code=1)
-    except ValueError as e:
-        rich.print(f"[red]Config validation failed:[/red] {e}")
-        raise typer.Exit(code=1)
-
-Subcommand-level errors (API failures, missing keys) are handled
-inside each subcommand, not here.
+Mounts pipeline subcommands under a single Typer app.
 """
 
-import typer
+from __future__ import annotations
 
-from x2video.cli import auth, fetch, curate, card, script, render, run
+import typer
+from rich.console import Console
+
+from x2video.cli import auth, card, curate, doctor, fetch, render, run, script
 from x2video.config.loader import load_config
+
+console = Console(stderr=True)
 
 app = typer.Typer(
     name="x2video",
@@ -27,11 +19,13 @@ app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
+_NO_CONFIG = {"auth", "doctor"}
+
 
 @app.callback()
 def main(
     ctx: typer.Context,
-    config: str = typer.Option(
+    config: str | None = typer.Option(
         None,
         "--config",
         "-c",
@@ -39,11 +33,17 @@ def main(
     ),
 ) -> None:
     """X2Video — automated pipeline from tweets to publish kit."""
-    # Auth subcommands do not need a full config (and should work pre-setup).
-    if ctx.invoked_subcommand == "auth":
+    if ctx.invoked_subcommand in _NO_CONFIG:
         ctx.obj = None
         return
-    ctx.obj = load_config(config)
+    try:
+        ctx.obj = load_config(config)
+    except FileNotFoundError:
+        console.print("[red]Config file not found.[/red]")
+        raise typer.Exit(code=1)
+    except ValueError as exc:
+        console.print(f"[red]Config validation failed:[/red] {exc}")
+        raise typer.Exit(code=1)
 
 
 app.add_typer(
@@ -51,6 +51,7 @@ app.add_typer(
     name="auth",
     help="Login / logout SuperGrok subscription (browser OAuth)",
 )
+app.add_typer(doctor.app, name="doctor", help="Check ffmpeg, Playwright, auth, and config")
 app.add_typer(fetch.app, name="fetch", help="Fetch candidates from X and apply hard filters")
 app.add_typer(curate.app, name="curate", help="Score candidates via LLM curation and select picks")
 app.add_typer(card.app, name="card", help="Render bilingual tweet cards")

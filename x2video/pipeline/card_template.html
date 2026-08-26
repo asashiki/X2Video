@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>Tweet Card</title>
+  <style>
+    :root {
+      --bg: #07080c;
+      --panel: #10131a;
+      --card: #15202b;
+      --card-border: #38444d;
+      --text: #e7e9ea;
+      --muted: #8b98a5;
+      --accent: #1d9bf0;
+      --translate-bg: #0c1924;
+      --translate-edge: #1d9bf0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    body {
+      background:
+        radial-gradient(1200px 700px at 50% -10%, rgba(29,155,240,0.16), transparent 60%),
+        radial-gradient(900px 500px at 80% 110%, rgba(29,155,240,0.08), transparent 50%),
+        var(--bg);
+      display: flex;
+      flex-direction: column;
+      padding: 56px 56px 260px;
+    }
+    .kicker {
+      color: var(--accent);
+      letter-spacing: 0.22em;
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .card {
+      width: 960px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 36px 36px 28px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    }
+    .row {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .avatar, .avatar-img, .avatar-fallback {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+    .avatar-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e2732;
+      color: var(--text);
+      font-size: 36px;
+      font-weight: 700;
+    }
+    .meta { min-width: 0; flex: 1; padding-top: 6px; }
+    .name-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .verified {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+    }
+    .handle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 24px;
+    }
+    .body {
+      margin: 28px 0 8px;
+      font-size: 34px;
+      line-height: 1.45;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .media {
+      margin: 22px 0 8px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      max-height: 280px;
+    }
+    .media img {
+      display: block;
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+    }
+    .stats {
+      display: flex;
+      gap: 28px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid #2f3b45;
+      color: var(--muted);
+      font-size: 22px;
+    }
+    .stats b { color: var(--text); font-weight: 700; }
+    .translate {
+      margin-top: 22px;
+      background: var(--translate-bg);
+      border-left: 6px solid var(--translate-edge);
+      border-radius: 0 16px 16px 0;
+      padding: 18px 22px 20px;
+    }
+    .translate .label {
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+    .translate .zh {
+      font-size: 30px;
+      line-height: 1.5;
+    }
+    .footer {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="kicker">X2Video · Digest</div>
+  <div class="footer">
+    <span>双语卡片 · 非截图</span>
+    <span>{{URL}}</span>
+  </div>
+  <div class="stage">
+    <article class="card">
+      <div class="row">
+        <div class="avatar">{{AVATAR}}</div>
+        <div class="meta">
+          <div class="name-line">{{AUTHOR_NAME}} {{VERIFIED}}</div>
+          <div class="handle">@{{HANDLE}} · {{TIME}}</div>
+        </div>
+      </div>
+      <div class="body">{{BODY}}</div>
+      {{MEDIA}}
+      <div class="stats">
+        <span><b>{{REPLIES}}</b> replies</span>
+        <span><b>{{RETWEETS}}</b> RT</span>
+        <span><b>{{LIKES}}</b> likes</span>
+        <span><b>{{VIEWS}}</b> views</span>
+      </div>
+      <div class="translate">
+        <div class="label">中文翻译</div>
+        <div class="zh">{{TRANSLATION}}</div>
+      </div>
+    </article>
+  </div>
+</body>
+</html>

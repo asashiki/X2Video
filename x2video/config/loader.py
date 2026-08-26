@@ -21,8 +21,25 @@ else:
     import tomli as tomllib  # pragma: no cover
 
 from dotenv import load_dotenv
+from pydantic import ValidationError
 
 from x2video.config.schema import X2VideoConfig
+
+_TOP_LEVEL = {"work_dir", "final_dir", "domain_keywords"}
+_SECTIONS = ("hard_filter", "curation", "llm", "tts", "source")
+_TTS_ALIASES = {
+    "TTS_PROVIDER": "provider",
+    "TTS_VOICE": "voice",
+    "TTS_RATE": "rate",
+    "TTS_VOLUME": "volume",
+    "TTS_PITCH": "pitch",
+    "TTS_API_BASE_URL": "api_base_url",
+    "TTS_API_KEY": "api_key",
+    "TTS_API_MODEL": "api_model",
+    "TTS_API_VOICE": "api_voice",
+    "TTS_API_FORMAT": "api_format",
+    "TTS_API_TIMEOUT_SECONDS": "api_timeout_seconds",
+}
 
 
 def _find_config(config_path: str | None = None) -> Path | None:
@@ -64,30 +81,53 @@ def _load_dotenv() -> dict[str, str]:
     return {}
 
 
-def _env_override(base: dict, prefix: str = "X2VIDEO_") -> dict:
-    """Apply X2VIDEO_* env var overrides to the flat config dict.
+def _ensure_section(result: dict, section: str) -> dict:
+    current = result.get(section)
+    if not isinstance(current, dict):
+        current = {}
+        result[section] = current
+    return current
 
-    Maps env vars to nested config keys:
-        X2VIDEO_LLM_API_KEY -> llm.api_key
-        X2VIDEO_TTS_API_KEY -> tts.api_key
-        X2VIDEO_WORK_DIR    -> work_dir
+
+def _apply_tts_aliases(result: dict) -> None:
+    """Honor unprefixed TTS_* names from docs/tts-config.md."""
+    tts = _ensure_section(result, "tts")
+    for env_key, field in _TTS_ALIASES.items():
+        if env_key in os.environ:
+            tts[field] = os.environ[env_key]
+
+
+def _env_override(base: dict, prefix: str = "X2VIDEO_") -> dict:
+    """Apply env var overrides to the nested config dict.
+
+    Maps:
+        X2VIDEO_LLM_API_KEY          -> llm.api_key
+        X2VIDEO_HARD_FILTER_MIN_LIKES -> hard_filter.min_likes
+        X2VIDEO_WORK_DIR             -> work_dir
+        TTS_PROVIDER                 -> tts.provider (alias)
     """
     result = dict(base)
+    _apply_tts_aliases(result)
     for key, value in os.environ.items():
         if not key.startswith(prefix):
             continue
-        # X2VIDEO_LLM_API_KEY -> llm.api_key
         config_key = key[len(prefix):].lower()
-        parts = config_key.split("_", 1)
-        section = parts[0]
-        if len(parts) == 2:
-            field = parts[1]
-            if section not in result:
-                result[section] = {}
-            if isinstance(result[section], dict):
-                result[section][field] = value
-        elif len(parts) == 1:
-            result[section] = value
+        if config_key in _TOP_LEVEL:
+            if config_key == "domain_keywords":
+                result[config_key] = [s.strip() for s in value.split(",") if s.strip()]
+            else:
+                result[config_key] = value
+            continue
+        matched = False
+        for section in sorted(_SECTIONS, key=len, reverse=True):
+            token = section + "_"
+            if config_key.startswith(token):
+                field = config_key[len(token):]
+                _ensure_section(result, section)[field] = value
+                matched = True
+                break
+        if not matched:
+            result[config_key] = value
     return result
 
 
@@ -141,7 +181,10 @@ def load_config(config_path: str | None = None) -> X2VideoConfig:
 
     merged = _toml_to_nested(raw)
 
-    cfg = X2VideoConfig(**merged)
+    try:
+        cfg = X2VideoConfig(**merged)
+    except ValidationError as exc:
+        raise ValueError(str(exc)) from exc
 
     # Ensure work/ and final/ directories exist
     Path(cfg.work_dir).mkdir(parents=True, exist_ok=True)

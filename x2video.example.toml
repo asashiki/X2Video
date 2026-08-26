@@ -10,7 +10,9 @@ domain_keywords = ["AI", "artificial intelligence", "machine learning", "LLM"]
 #   "grok"  — SuperGrok / X Premium+ OAuth + X Search
 #             (run `x2video auth login` first; bills subscription tokens)
 [source]
-provider = "x_mcp"
+# "x_mcp" — X official MCP (needs X_BEARER_TOKEN; not implemented yet, issue #1)
+# "grok"  — SuperGrok OAuth + X Search (`x2video auth login`)
+provider = "grok"
 # model / api_base only used when provider = "grok"
 model = "grok-4-1-fast-reasoning"
 api_base = "https://api.x.ai/v1"
@@ -36,15 +38,15 @@ max_candidates = 50
 [llm]
 # Provider: "api" for any API-compatible chat completion endpoint
 provider = "api"
-# Base URL of the API endpoint (trailing v1 path)
-api_base_url = ""
-# Model name — use whatever your provider supports
-model = ""
-# API key: set via X2VIDEO_LLM_API_KEY env var or .env, NOT here
+# Empty api_base_url / api_key / model → SuperGrok OAuth session is used
+api_base_url = "https://api.x.ai/v1"
+model = "grok-4-1-fast-reasoning"
+# API key: set via X2VIDEO_LLM_API_KEY env var or .env, NOT here.
+# Leave empty to reuse `x2video auth login`.
 api_key = ""
-timeout_seconds = 60
+timeout_seconds = 120
 max_tokens = 4096
-temperature = 0.7
+temperature = 0.4
 
 [tts]
 # Provider: "edge" (free, no API key) or "api" (external service)

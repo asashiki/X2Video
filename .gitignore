@@ -2,8 +2,9 @@
 .vscode/
 .claude/settings.local.json
 
-# Secrets
+# Secrets and local machine config
 .env
+x2video.toml
 
 # Python
 __pycache__/

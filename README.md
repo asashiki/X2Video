@@ -6,9 +6,9 @@
 
 ## 项目状态
 
-方案设计已完成，处于按 issue 实现阶段。开发路线图见 [Issues](https://github.com/asashiki/X2Video/issues)（按里程碑 M1-M7 排序）。
+管线已可本地跑通：`fetch → curate → card → script → render`，产出 `final/` 下的 Publish Kit。X 官方 MCP（issue #1）仍是占位，默认走 SuperGrok OAuth + X Search。蒸馏（issue #6）目前用手写初版 prompt。
 
-MVP 范围：AI/科技圈领域、单推文视频起步（目标是多条推文的合集形态）、人工上传。后期方向（欢迎讨论与认领）：领域可配置、多内容源、英文版输出、剪映草稿导出等。
+MVP 范围：AI/科技圈领域、Digest（N=1 为单推文特例）、人工上传。后期方向：领域可配置、多内容源、英文版输出、剪映草稿导出等。
 
 ## 参与开发
 
@@ -50,10 +50,14 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
 # 3. 安装项目（可编辑模式）
 pip install -e .
+playwright install chromium
 
 # 4. 验证
+x2video doctor
 x2video --help
 ```
+
+系统还需本机 `ffmpeg` / `ffprobe`（合成竖屏 MP4）。
 
 ## 配置
 
@@ -62,6 +66,7 @@ x2video --help
 ```bash
 cp x2video.example.toml x2video.toml
 # 按需编辑：领域关键词、互动门槛、LLM 服务地址、TTS 方案等
+# 本地 x2video.toml 已被 gitignore，不要提交密钥或个人偏好
 ```
 
 ### 配置文件查找顺序
@@ -98,7 +103,32 @@ x2video auth logout
 
 # 4. 拉取候选推文（消耗的是 SuperGrok 订阅 token，不是 X API）
 x2video fetch -k AI -k LLM
+
+# 5. 一键跑通（Gate 1 直通，取 top N）
+x2video run --auto
+
+# 或分步：
+x2video curate --auto
+x2video card
+x2video script
+x2video render
 ```
+
+`x2video run` 会复用 `work/YYYY-MM-DD/` 里已有产物；`--force` 重跑，`--from-stage card` 从指定环节续跑。
+
+### 定时任务（直通模式）
+
+把 `[curation].blocking_mode` 设为 `false`，或始终加 `--auto`。Windows 计划任务示例（每天 8:00）：
+
+```bat
+schtasks /create /tn X2Video /sc daily /st 08:00 /tr "cmd /c cd /d C:\path\to\X2Video && .venv\Scripts\x2video.exe run --auto"
+```
+
+Linux/macOS 用 cron：`0 8 * * * cd /path/to/X2Video && .venv/bin/x2video run --auto`。
+
+产出在 `final/`，上传仍是人工 Gate 2。
+
+LLM 未配置 `X2VIDEO_LLM_API_KEY` 时，会复用 SuperGrok 登录会话。TTS 默认 Edge 免费语音。
 
 OAuth 凭证落在 `~/.config/x2video/grok_auth.json`（本地权限 600），access token 会自动 refresh。
 
@@ -125,3 +155,4 @@ SuperGrok OAuth **不要**把 token 写进 `.env`；一律走 `x2video auth logi
 - TTS：按 AGENTS.md「TTS config」约定使用既有配置（默认 Edge 免费 TTS），管线代码只调用、不改动 TTS 模块
 - 文档与界面文案中不出现具体 AI 厂商/模型名，用中性表述
 - 比较推荐用'mattpocock/skills'的'/implement'来对应issues开发
+- 合成层决策见 [ADR-0009](./docs/adr/0009-playwright-cards-ffmpeg-compose.md)：HTML 卡片 + FFmpeg 成片
