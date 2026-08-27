@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>Cover</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1080px;
+      height: 1440px;
+      overflow: hidden;
+      color: #f4f1ea;
+      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    body { position: relative; background: #0b0d10; }
+    .bg {
+      position: absolute;
+      inset: -40px;
+      background-size: cover;
+      background-position: center;
+      filter: blur(36px) saturate(1.2) brightness(0.5);
+      transform: scale(1.1);
+    }
+    .veil {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.55) 100%);
+    }
+    .inner {
+      position: relative;
+      z-index: 1;
+      height: 1440px;
+      padding: 72px 64px 360px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 28px;
+    }
+    .date {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #ddd6c5;
+    }
+    .series {
+      font-size: 24px;
+      color: #a8a093;
+      letter-spacing: 0.22em;
+    }
+    .title {
+      font-size: 64px;
+      font-weight: 800;
+      line-height: 1.2;
+      max-width: 920px;
+    }
+    .sub {
+      font-size: 28px;
+      color: #c8c2b4;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" style="{{BG_STYLE}}"></div>
+  <div class="veil"></div>
+  <div class="inner">
+    <div class="date">{{DATE}}</div>
+    <div class="series">今日外网</div>
+    <div class="title">{{TITLE}}</div>
+    <div class="sub">{{SUB}}</div>
+  </div>
+</body>
+</html>

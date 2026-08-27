@@ -37,7 +37,7 @@ CURATION_SCHEMA: dict[str, Any] = {
     "required": ["items"],
 }
 
-MIN_KEEP_SCORE = 6.0
+MIN_KEEP_SCORE = 5.5
 
 
 def _candidate_payload(c: CandidateTweet) -> dict[str, Any]:
@@ -199,6 +199,11 @@ async def run_curate(
             await llm.close()
 
     picks = select_picks(scored, top_n=cfg.curation.top_n, indices=indices)
+    if not picks:
+        raise RuntimeError(
+            "Curation produced 0 picks. Relax keywords or hard_filter, "
+            "or run fetch --skip-hard-filter."
+        )
     day = run_dir.name
     md = render_candidates_md(scored, date=day, kept_ids={p.id for p in picks})
     md_path = run_dir / "candidates.md"

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from x2video.config.schema import X2VideoConfig
-from x2video.pipeline.hard_filter import apply_hard_filter
+from x2video.pipeline.hard_filter import apply_hard_filter, is_fresh
 from x2video.pipeline.io import write_candidates
 from x2video.pipeline.ledger import Ledger
 from x2video.pipeline.workdir import resolve_run_dir
@@ -52,12 +52,16 @@ def run_fetch(
 
     filtered: list[CandidateTweet]
     if skip_hard_filter:
-        filtered = list(pool)
+        filtered = [c for c in pool if is_fresh(c, hf.max_age_hours)]
     else:
         filtered = apply_hard_filter(pool, hf)
 
     filtered.sort(key=lambda c: c.engagement_score(), reverse=True)
     filtered = filtered[:limit]
+    if not filtered:
+        raise RuntimeError(
+            "fetch kept 0 candidates. Relax [hard_filter] or add keywords."
+        )
 
     ledger.mark_seen(c.id for c in raw)
     ledger.save()

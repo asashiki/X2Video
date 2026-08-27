@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
 import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
 
 from x2video.config.schema import X2VideoConfig
+from x2video.pipeline.card import background_style, render_cover, render_opener
 from x2video.pipeline.io import load_picks, load_script, write_json
 from x2video.pipeline.models import DigestScript, Pick
 from x2video.pipeline.workdir import resolve_run_dir, timestamp_stamp
 from x2video.tts.client import create_tts_provider
-from x2video.util import split_subtitles
+from x2video.util import ensure_date_lead, format_md_date, split_subtitles
 
 
 def ensure_ffmpeg() -> None:
@@ -72,7 +74,7 @@ def build_ass(lines: list[str], duration: float) -> str:
         "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
         "Alignment, MarginL, MarginR, MarginV, Encoding\n"
         "Style: Default,Microsoft YaHei,52,&H00FFFFFF,&H000000FF,&H80101010,"
-        "&H80000000,0,0,0,0,100,100,0,0,1,3,0,2,70,70,96,1\n"
+        "&H80000000,0,0,0,0,100,100,0,0,1,3,0,2,70,70,240,1\n"
         "\n"
         "[Events]\n"
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
@@ -105,12 +107,12 @@ def compose_segment(
     output: Path,
     duration: float,
 ) -> Path:
-    fade_out = max(duration - 0.35, 0.1)
+    dur = max(duration, 0.4)
     vf = (
-        "scale=1080:1920:force_original_aspect_ratio=decrease,"
-        "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x07080c,"
+        "scale=1166:2074,"
+        f"crop=1080:1920:min(86*t/{dur:.3f}\\,86):min(154*t/{dur:.3f}\\,154),"
         "format=yuv420p,"
-        f"fade=t=in:st=0:d=0.25,fade=t=out:st={fade_out:.2f}:d=0.3,"
+        f"fade=t=in:st=0:d=0.05,"
         f"subtitles='{escape_subtitles_path(ass_path)}'"
     )
     cmd = [
@@ -147,29 +149,130 @@ def compose_segment(
     return output
 
 
-def concat_videos(parts: list[Path], output: Path) -> Path:
-    listing = output.parent / "concat.txt"
+def concat_files(parts: list[Path], output: Path, *, copy: bool = True) -> Path:
+    if len(parts) == 1:
+        shutil.copyfile(parts[0], output)
+        return output
+    listing = output.parent / f"{output.stem}.concat.txt"
     listing.write_text(
         "".join(f"file '{p.resolve().as_posix()}'\n" for p in parts),
         encoding="utf-8",
     )
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-f",
-        "concat",
-        "-safe",
-        "0",
-        "-i",
-        str(listing),
-        "-c",
-        "copy",
-        str(output),
-    ]
+    cmd = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listing)]
+    if copy:
+        cmd += ["-c", "copy"]
+    else:
+        cmd += ["-c:a", "libmp3lame", "-q:a", "4"]
+    cmd.append(str(output))
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"ffmpeg concat failed:\n{result.stderr[-2000:]}")
     return output
+
+
+def concat_videos(parts: list[Path], output: Path) -> Path:
+    return concat_files(parts, output, copy=True)
+
+
+def build_ass_cues(cues: list[tuple[str, float, float]]) -> str:
+    header = (
+        "[Script Info]\n"
+        "ScriptType: v4.00+\n"
+        "PlayResX: 1080\n"
+        "PlayResY: 1920\n"
+        "WrapStyle: 2\n"
+        "\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+        "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
+        "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        "Style: Default,Microsoft YaHei,52,&H00FFFFFF,&H000000FF,&H80101010,"
+        "&H80000000,0,0,0,0,100,100,0,0,1,3,0,2,70,70,240,1\n"
+        "\n"
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    )
+    events: list[str] = []
+    for text, start, end in cues:
+        clean = text.replace("\n", " ").replace("{", "(").replace("}", ")")
+        if end <= start:
+            end = start + 0.3
+        events.append(
+            f"Dialogue: 0,{format_ass_time(start)},{format_ass_time(end)},"
+            f"Default,,0,0,0,,{clean}"
+        )
+    return header + "\n".join(events) + "\n"
+
+
+async def synthesize_aligned(
+    tts: Any,
+    text: str,
+    folder: Path,
+    stem: str,
+) -> tuple[Path, list[tuple[str, float, float]], float]:
+    """TTS each subtitle line separately so on-screen text matches the voice."""
+    folder.mkdir(parents=True, exist_ok=True)
+    lines = [ln for ln in split_subtitles(text) if ln.strip("。！？!?；;，,、. ")]
+    if not lines:
+        lines = [text.strip() or " "]
+    parts: list[Path] = []
+    cues: list[tuple[str, float, float]] = []
+    cursor = 0.0
+    for i, line in enumerate(lines):
+        part = folder / f"{stem}_l{i:02d}.mp3"
+        await tts.synthesize(line, part)
+        duration = probe_duration(part)
+        cues.append((line, cursor, cursor + duration))
+        cursor += duration
+        parts.append(part)
+    audio = folder / f"{stem}.mp3"
+    concat_files(parts, audio, copy=False)
+    return audio, cues, cursor
+
+
+def mix_bgm(video: Path, bgm: Path, output: Path, *, duration: float) -> Path:
+    """Lay a quiet looping bed under the TTS mix."""
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(video),
+        "-stream_loop",
+        "-1",
+        "-i",
+        str(bgm),
+        "-filter_complex",
+        f"[1:a]volume=0.10,atrim=0:{duration:.3f},asetpts=PTS-STARTPTS[bg];"
+        "[0:a][bg]amix=inputs=2:duration=first:dropout_transition=0[a]",
+        "-map",
+        "0:v",
+        "-map",
+        "[a]",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-shortest",
+        str(output),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"BGM mix failed:\n{result.stderr[-1500:]}")
+    return output
+
+
+def resolve_bgm(cfg: X2VideoConfig) -> Path | None:
+    candidates = []
+    if cfg.bgm_path:
+        candidates.append(Path(cfg.bgm_path))
+    candidates.append(Path("assets") / "bgm.mp3")
+    for path in candidates:
+        if path.exists() and path.stat().st_size > 1000:
+            return path
+    return None
 
 
 def write_publish_md(
@@ -178,38 +281,84 @@ def write_publish_md(
     script: DigestScript,
     video: Path,
     cover: Path,
+    picks: list[Pick] | None = None,
+    qc: dict[str, Any] | None = None,
 ) -> Path:
     titles = script.title_suggestions or ["今日 AI 热帖速览"]
     while len(titles) < 3:
         titles.append(titles[0])
     tags = " ".join(f"#{t.lstrip('#')}" for t in (script.tags or ["AI", "科技", "热帖"]))
     body = script.description or "外网 AI/科技热帖速览，卡片解说。"
-    text = "\n".join(
-        [
-            "# Publish Kit",
-            "",
-            "## 标题（选一）",
-            *[f"{i}. {t}" for i, t in enumerate(titles[:3], start=1)],
-            "",
-            "## 简介",
-            "",
-            body,
-            "",
-            "## 标签",
-            "",
-            tags,
-            "",
-            "## 文件",
-            "",
-            f"- 视频: `{video.name}`",
-            f"- 封面: `{cover.name}`",
-            "",
-            "上传由人工完成（Gate 2）。",
-            "",
-        ]
-    )
-    path.write_text(text, encoding="utf-8")
+    lines = [
+        "# Publish Kit",
+        "",
+        f"成片日期: {format_md_date()}",
+        "",
+        "## 标题（选一）",
+        *[f"{i}. {t}" for i, t in enumerate(titles[:3], start=1)],
+        "",
+        "## 简介",
+        "",
+        body,
+        "",
+        "## 标签",
+        "",
+        tags,
+        "",
+        "## 条目",
+        "",
+    ]
+    for i, pick in enumerate(picks or [], start=1):
+        lines.append(
+            f"{i}. {format_md_date(pick.created_at)} @{pick.author_username}  {pick.url}"
+        )
+    lines += [
+        "",
+        "## 文件",
+        "",
+        f"- 视频 9:16: `{video.name}`",
+        f"- 封面 3:4: `{cover.name}`（抖音信息流用这张，底 25% 已被预留）",
+        "",
+        "## Gate 2 审片",
+        "",
+        "- [ ] 日期是今天/昨天/本周",
+        "- [ ] 口播和字幕对齐",
+        "- [ ] 封面缩略图能读出标题",
+        "- [ ] 没有过期或跑题条目",
+        "",
+        "上传由人工完成。",
+        "",
+    ]
+    if qc:
+        if qc.get("warnings"):
+            lines += ["## QC 警告", ""]
+            lines += [f"- {w}" for w in qc["warnings"]]
+            lines.append("")
+        if qc.get("errors"):
+            lines += ["## QC 错误", ""]
+            lines += [f"- {e}" for e in qc["errors"]]
+            lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
     return path
+
+
+def _cover_headline(script: DigestScript, first: Pick | None) -> str:
+    """Short Chinese line for the 3:4 feed cover. Prefer 译文, never a chopped English title."""
+    import re
+
+    source = ""
+    if first and first.translation:
+        source = first.translation
+    elif script.title_suggestions:
+        source = script.title_suggestions[0]
+    clauses = [p.strip() for p in re.split(r"[，。！？]", source or "") if p.strip()]
+    for clause in clauses:
+        cjk = sum(1 for ch in clause if "\u4e00" <= ch <= "\u9fff")
+        if cjk >= 6:
+            return clause[:14]
+    if clauses:
+        return clauses[0][:14]
+    return "外网热帖"
 
 
 def _card_for_pick(cards_dir: Path, pick: Pick) -> Path:
@@ -252,37 +401,67 @@ async def run_render(
     if not spoken:
         raise ValueError("Script has no spoken text.")
 
-    audio_paths = await tts.synthesize_batch(spoken, work_audio)
-    if hasattr(tts, "close"):
-        close = getattr(tts, "close")
-        if callable(close):
-            maybe = close()
-            if hasattr(maybe, "__await__"):
-                await maybe
-
     clips: list[Path] = []
-    for i, (seg, audio, spoken_text) in enumerate(zip(script.segments, audio_paths, spoken)):
-        pick = pick_by_id.get(seg.pick_id) or (picks[i] if i < len(picks) else None)
-        if pick is None:
-            pngs = sorted(cards.glob("*.png"))
-            if not pngs:
-                raise FileNotFoundError(f"No cards for segment {seg.pick_id}")
-            card_png = pngs[min(i, len(pngs) - 1)]
-        else:
-            card_png = _card_for_pick(cards, pick)
-        duration = probe_duration(audio)
-        lines = seg.subtitle_lines or split_subtitles(spoken_text)
-        ass_path = work_clips / f"seg_{i:02d}.ass"
-        ass_path.write_text(build_ass(lines, duration), encoding="utf-8-sig")
-        clip = work_clips / f"seg_{i:02d}.mp4"
-        compose_segment(
-            card_png=card_png,
-            audio=audio,
-            ass_path=ass_path,
-            output=clip,
-            duration=duration,
-        )
-        clips.append(clip)
+    try:
+        opener = script.opener_text()
+        today = format_md_date()
+        if opener:
+            opener_png = cards / "opener.png"
+            opener_spoken = ensure_date_lead(opener, today)
+            await asyncio.to_thread(
+                render_opener,
+                opener,
+                opener_png,
+                count=len(script.segments),
+                date_label=today,
+            )
+            audio, cues, duration = await synthesize_aligned(
+                tts, opener_spoken, work_audio, "opener"
+            )
+            ass_path = work_clips / "opener.ass"
+            ass_path.write_text(build_ass_cues(cues), encoding="utf-8-sig")
+            opener_clip = work_clips / "opener.mp4"
+            compose_segment(
+                card_png=opener_png,
+                audio=audio,
+                ass_path=ass_path,
+                output=opener_clip,
+                duration=duration,
+            )
+            clips.append(opener_clip)
+
+        for i, (seg, spoken_text) in enumerate(zip(script.segments, spoken)):
+            pick = pick_by_id.get(seg.pick_id) or (picks[i] if i < len(picks) else None)
+            if pick is None:
+                pngs = sorted(cards.glob("*.png"))
+                if not pngs:
+                    raise FileNotFoundError(f"No cards for segment {seg.pick_id}")
+                card_png = pngs[min(i, len(pngs) - 1)]
+            else:
+                card_png = _card_for_pick(cards, pick)
+            item_date = format_md_date(pick.created_at if pick else "")
+            spoken_text = ensure_date_lead(spoken_text, item_date)
+            audio, cues, duration = await synthesize_aligned(
+                tts, spoken_text, work_audio, f"seg_{i:02d}"
+            )
+            ass_path = work_clips / f"seg_{i:02d}.ass"
+            ass_path.write_text(build_ass_cues(cues), encoding="utf-8-sig")
+            clip = work_clips / f"seg_{i:02d}.mp4"
+            compose_segment(
+                card_png=card_png,
+                audio=audio,
+                ass_path=ass_path,
+                output=clip,
+                duration=duration,
+            )
+            clips.append(clip)
+    finally:
+        if hasattr(tts, "close"):
+            close = getattr(tts, "close")
+            if callable(close):
+                maybe = close()
+                if hasattr(maybe, "__await__"):
+                    await maybe
 
     video = kit_dir / "video.mp4"
     if len(clips) == 1:
@@ -290,30 +469,47 @@ async def run_render(
     else:
         concat_videos(clips, video)
 
-    cover = kit_dir / "cover.png"
-    first_card = sorted(cards.glob("*.png"))
-    if first_card:
-        shutil.copyfile(first_card[0], cover)
-    else:
-        thumb = subprocess.run(
-            ["ffmpeg", "-y", "-i", str(video), "-frames:v", "1", str(cover)],
-            capture_output=True,
-            text=True,
-        )
-        if thumb.returncode != 0:
-            raise RuntimeError("Could not write cover image.")
+    bgm = resolve_bgm(cfg)
+    if bgm is not None:
+        mixed = kit_dir / "video.bgm.mp4"
+        mix_bgm(video, bgm, mixed, duration=probe_duration(video))
+        video.unlink(missing_ok=True)
+        shutil.move(str(mixed), str(video))
 
+    cover = kit_dir / "cover.png"
+    first = picks[0] if picks else None
+    title = _cover_headline(script, first)
+    sub = f"{len(picks)} 条热帖" if picks else "热帖速览"
+    bg_style = background_style(first) if first else "background:#0b0d10"
+    await asyncio.to_thread(
+        render_cover,
+        cover,
+        title=title,
+        date_label=format_md_date(),
+        sub=sub,
+        bg_style=bg_style,
+    )
+
+    from x2video.pipeline.qc import inspect_kit
+
+    qc = inspect_kit(video=video, cover=cover, pick_count=len(picks))
+    write_json(kit_dir / "qc.json", qc)
     publish_md = write_publish_md(
         kit_dir / "publish.md",
         script=script,
         video=video,
         cover=cover,
+        picks=picks,
+        qc=qc,
     )
     pointer = {
         "video": str(video),
         "cover": str(cover),
         "publish_md": str(publish_md),
         "kit_dir": str(kit_dir),
+        "qc": qc,
     }
     write_json(run_dir / "publish_kit.json", pointer)
+    if not qc["ok"]:
+        raise RuntimeError("QC failed: " + "; ".join(qc["errors"]))
     return pointer

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>Opener</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #0b0d10;
+      color: #f4f1ea;
+      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    body {
+      position: relative;
+    }
+    .grid {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(900px 700px at 50% 28%, rgba(255,255,255,0.07), transparent 62%),
+        repeating-linear-gradient(
+          0deg,
+          transparent 0,
+          transparent 47px,
+          rgba(255,255,255,0.035) 48px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0,
+          transparent 47px,
+          rgba(255,255,255,0.035) 48px
+        );
+    }
+    .veil {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 100%);
+    }
+    .inner {
+      position: relative;
+      z-index: 1;
+      height: 1920px;
+      padding: 220px 72px 320px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 36px;
+    }
+    .label {
+      font-size: 28px;
+      color: #c8c2b4;
+      letter-spacing: 0.28em;
+    }
+    .hook {
+      font-size: 72px;
+      font-weight: 800;
+      line-height: 1.22;
+      max-width: 900px;
+    }
+    .meta {
+      font-size: 28px;
+      color: #9a9488;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="veil"></div>
+  <div class="inner">
+    <div class="label">{{DATE}} · 今日外网</div>
+    <div class="hook">{{HOOK}}</div>
+    <div class="meta">{{META}}</div>
+  </div>
+</body>
+</html>

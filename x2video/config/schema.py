@@ -19,6 +19,8 @@ class HardFilterConfig(BaseModel):
     min_retweets: int = 10
     min_replies: int = 0
     views_threshold: int = 0
+    # Drop anything older than this, even if the source returned it.
+    max_age_hours: int = 168
 
 
 class CurationConfig(BaseModel):
@@ -28,7 +30,7 @@ class CurationConfig(BaseModel):
     on their suitability for a Chinese short video.
     """
 
-    top_n: int = 5
+    top_n: int = 6
     blocking_mode: bool = True  # True = Gate 1 waits for user; False = direct
     max_candidates: int = 50
 
@@ -56,7 +58,7 @@ class TTSConfig(BaseModel):
 
     provider: str = "edge"  # "edge" or "api"
     voice: str = "zh-CN-XiaoxiaoNeural"
-    rate: str = "+0%"
+    rate: str = "+12%"
     volume: str = "+0%"
     pitch: str = "+0Hz"
     # API mode fields (only used when provider == "api")
@@ -103,3 +105,5 @@ class X2VideoConfig(BaseModel):
     source: SourceConfig = SourceConfig()
     work_dir: str = "work"
     final_dir: str = "final"
+    # Optional bed music. Empty = look for assets/bgm.mp3, skip if missing.
+    bgm_path: str = ""

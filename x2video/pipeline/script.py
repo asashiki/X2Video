@@ -11,7 +11,7 @@ from x2video.pipeline.io import load_picks, write_script
 from x2video.pipeline.models import DigestScript, ScriptSegment
 from x2video.pipeline.prompts import load_prompt
 from x2video.pipeline.workdir import resolve_run_dir
-from x2video.util import parse_json_payload, split_subtitles
+from x2video.util import ensure_date_lead, format_md_date, parse_json_payload, split_subtitles
 
 SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -70,7 +70,11 @@ def script_to_markdown(script: DigestScript) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _coerce_script(raw: Any, pick_ids: list[str]) -> DigestScript:
+def _coerce_script(
+    raw: Any,
+    pick_ids: list[str],
+    date_by_id: dict[str, str] | None = None,
+) -> DigestScript:
     if isinstance(raw, list):
         raw = {"segments": raw}
     if not isinstance(raw, dict):
@@ -86,6 +90,8 @@ def _coerce_script(raw: Any, pick_ids: list[str]) -> DigestScript:
         narration = str(item.get("narration") or item.get("text") or "").strip()
         if not narration:
             continue
+        label = (date_by_id or {}).get(pid, "")
+        narration = ensure_date_lead(narration, label)
         subs = item.get("subtitle_lines") or []
         if not isinstance(subs, list) or not subs:
             subs = split_subtitles(narration)
@@ -134,6 +140,7 @@ async def run_script(
                 "likes": p.likes,
                 "url": p.url,
                 "reason": p.reason,
+                "date_label": format_md_date(p.created_at),
             }
             for p in picks
         ],
@@ -145,8 +152,9 @@ async def run_script(
         {
             "role": "user",
             "content": (
-                f"Write a Chinese narration digest for N={len(picks)} pick(s). "
-                "Return JSON only.\n\n"
+                f"写一条外网热帖速览口播，N={len(picks)}。"
+                "营销号报新闻口吻。每条第一句必须带 date_label（几月几号）。"
+                "每条十几秒，合计大约两分钟。只输出 JSON。\n\n"
                 + json.dumps(payload, ensure_ascii=False, indent=2)
             ),
         },
@@ -154,14 +162,17 @@ async def run_script(
     llm = create_llm_provider(cfg.llm)
     try:
         try:
-            parsed = await llm.complete_structured(messages, SCRIPT_SCHEMA)
+            parsed = await llm.complete_structured(
+                messages, SCRIPT_SCHEMA, temperature=0.75
+            )
         except Exception:
-            text = await llm.complete(messages)
+            text = await llm.complete(messages, temperature=0.75)
             parsed = parse_json_payload(text)
     finally:
         await llm.close()
 
-    script = _coerce_script(parsed, [p.id for p in picks])
+    dates = {p.id: format_md_date(p.created_at) for p in picks}
+    script = _coerce_script(parsed, [p.id for p in picks], dates)
     dest = output_path or (run_dir / "script.json")
     write_script(dest, script)
     md_path = dest.with_suffix(".md")

@@ -31,17 +31,32 @@ class DigestScript(BaseModel):
     description: str = ""
     tags: list[str] = Field(default_factory=list)
 
+    def opener_text(self) -> str:
+        """Dedicated bumper line. Empty means skip the opener clip."""
+        return self.hook.strip()
+
     def spoken_texts(self) -> list[str]:
-        """One spoken string per segment (hook on first, outro on last)."""
+        """One spoken string per tweet segment. Hook is NOT mixed in."""
         n = len(self.segments)
         out: list[str] = []
         for i, seg in enumerate(self.segments):
             parts: list[str] = []
-            if i == 0 and self.hook.strip():
-                parts.append(self.hook.strip())
             if seg.narration.strip():
                 parts.append(seg.narration.strip())
             if i == n - 1 and self.outro.strip():
                 parts.append(self.outro.strip())
-            out.append(" ".join(parts))
+            out.append(_join_spoken(parts))
         return out
+
+
+def _join_spoken(parts: list[str]) -> str:
+    """Join hook/narration/outro so Chinese TTS sees one continuous script."""
+    bits: list[str] = []
+    for raw in parts:
+        piece = raw.strip()
+        if not piece:
+            continue
+        if bits and bits[-1][-1] not in "。！？!?…":
+            bits[-1] = bits[-1] + "。"
+        bits.append(piece)
+    return "".join(bits)

@@ -26,10 +26,12 @@ min_likes = 100
 min_retweets = 10
 min_replies = 0
 views_threshold = 0
+# Drop posts older than one week (news-desk freshness)
+max_age_hours = 168
 
 [curation]
-# Number of top-scored candidates to pick per digest
-top_n = 5
+# Number of top-scored candidates to pick per digest (~2 min at 15-20s each)
+top_n = 6
 # Gate 1: true = wait for user confirmation, false = fully automatic
 blocking_mode = true
 # Maximum candidates sent to the LLM for scoring
@@ -52,7 +54,8 @@ temperature = 0.4
 # Provider: "edge" (free, no API key) or "api" (external service)
 provider = "edge"
 voice = "zh-CN-XiaoxiaoNeural"
-rate = "+0%"
+# Slight speedup is the short-video default (about +10–15%), not a defect.
+rate = "+12%"
 volume = "+0%"
 pitch = "+0Hz"
 # The fields below are only used when provider == "api"
@@ -62,3 +65,7 @@ api_model = ""
 api_voice = ""
 api_format = "mp3"
 api_timeout_seconds = 60
+
+# Optional bed music for unattended renders (instrumental).
+# If empty, looks for ./assets/bgm.mp3 and skips when missing.
+# bgm_path = "assets/bgm.mp3"

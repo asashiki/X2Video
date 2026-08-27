@@ -20,11 +20,19 @@ from x2video.tts.base import TTSProvider
 
 def _sapi_synthesize(text: str, output_path: Path) -> Path:
     """Windows SAPI → WAV → ffmpeg MP3. Last-resort local fallback."""
-    wav_path = output_path.with_suffix(".sapi.wav")
+    import tempfile
+    import uuid
+
+    wav_path = Path(tempfile.gettempdir()) / f"x2video-{uuid.uuid4().hex}.wav"
     script = (
         "Add-Type -AssemblyName System.Speech; "
         "$s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
-        "$s.Rate = 0; "
+        "foreach ($v in $s.GetInstalledVoices()) { "
+        "  if ($v.VoiceInfo.Culture.Name -eq 'zh-CN') { "
+        "    $s.SelectVoice($v.VoiceInfo.Name); break "
+        "  } "
+        "}; "
+        "$s.Rate = 1; "
         f"$s.SetOutputToWaveFile('{wav_path.as_posix()}'); "
         "$s.Speak([Console]::In.ReadToEnd()); "
         "$s.Dispose();"
@@ -98,5 +106,12 @@ class EdgeTTSProvider(TTSProvider):
                 await asyncio.sleep(0.8)
 
         if sys.platform == "win32":
-            return await asyncio.to_thread(_sapi_synthesize, text, output_path)
+            try:
+                return await asyncio.to_thread(_sapi_synthesize, text, output_path)
+            except Exception as sapi_exc:
+                raise RuntimeError(
+                    f"Edge TTS failed ({last_error}) and Windows SAPI fallback "
+                    f"also failed ({sapi_exc}). Configure [tts] API if you have "
+                    "a speech endpoint."
+                ) from sapi_exc
         raise RuntimeError(f"Edge TTS failed: {last_error}")
