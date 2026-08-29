@@ -52,11 +52,16 @@ class AgentRuntime:
             RunState.COMPLETE.value,
         }:
             return snapshot
+        if snapshot["run"].get("is_paused"):
+            return snapshot
         goal = ContentGoal.model_validate(snapshot["goal"])
         spent = dict(snapshot["run"].get("spent") or {})
         started = time.monotonic()
 
         while True:
+            current = self.store.get_run(run_id)
+            if current and current.get("is_paused"):
+                break
             tasks = self.store.get_tasks(run_id)
             next_task = self._next_task(tasks)
             if next_task is None:
@@ -183,6 +188,18 @@ class AgentRuntime:
                 self.store.set_task_status(task["task_id"], TaskStatus.CANCELED)
         self.store.set_run_state(run_id, RunState.CANCELED, error=summary)
         self._event(run_id, None, "run.canceled", RunState.CANCELED, summary)
+
+    def pause(self, run_id: str) -> None:
+        self.store.set_paused(run_id, True)
+        run = self.store.get_run(run_id)
+        state = RunState(run["state"]) if run else RunState.PLAN
+        self._event(run_id, None, "run.paused", state, "Run paused by user")
+
+    def resume(self, run_id: str) -> None:
+        self.store.set_paused(run_id, False)
+        run = self.store.get_run(run_id)
+        state = RunState(run["state"]) if run else RunState.PLAN
+        self._event(run_id, None, "run.resumed", state, "Run resumed by user")
 
     def retry(self, run_id: str, *, task_id: str | None = None) -> str:
         tasks = self.store.get_tasks(run_id)

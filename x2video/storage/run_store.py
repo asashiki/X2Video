@@ -124,6 +124,20 @@ class RunStore:
                 (state.value, redact(error), _now(), run_id),
             )
 
+    def set_paused(self, run_id: str, paused: bool) -> None:
+        with self.transaction() as db:
+            db.execute(
+                "UPDATE runs SET is_paused=?,updated_at=? WHERE run_id=?",
+                (int(paused), _now(), run_id),
+            )
+
+    def set_parent(self, run_id: str, parent_run_id: str) -> None:
+        with self.transaction() as db:
+            db.execute(
+                "UPDATE runs SET parent_run_id=?,updated_at=? WHERE run_id=?",
+                (parent_run_id, _now(), run_id),
+            )
+
     def update_spent(self, run_id: str, spent: dict[str, Any]) -> None:
         with self.transaction() as db:
             db.execute(
@@ -192,6 +206,10 @@ class RunStore:
                     _dump(event.output_artifact_ids),
                 ),
             )
+        trace_dir = self.path.parent / "traces"
+        trace_dir.mkdir(parents=True, exist_ok=True)
+        with (trace_dir / f"{event.run_id}.jsonl").open("a", encoding="utf-8") as stream:
+            stream.write(_dump(event) + "\n")
 
     def list_events(self, run_id: str, *, after: str | None = None) -> list[dict[str, Any]]:
         query = "SELECT * FROM events WHERE run_id=?"
@@ -325,6 +343,34 @@ class RunStore:
                 "INSERT INTO memories_fts(memory_id,content) VALUES (?,?)",
                 (memory.memory_id, redact(memory.content)),
             )
+
+    def list_memories(self, *, status: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT payload_json FROM memories"
+        values: list[Any] = []
+        if status:
+            query += " WHERE status=?"
+            values.append(status)
+        query += " ORDER BY created_at DESC"
+        with self.transaction() as db:
+            rows = db.execute(query, values).fetchall()
+        return [json.loads(row["payload_json"]) for row in rows]
+
+    def set_memory_status(self, memory_id: str, status: str) -> dict[str, Any]:
+        if status not in {"approved", "rejected", "expired"}:
+            raise ValueError("Memory status must be approved, rejected, or expired")
+        with self.transaction() as db:
+            row = db.execute(
+                "SELECT payload_json FROM memories WHERE memory_id=?", (memory_id,)
+            ).fetchone()
+            if not row:
+                raise KeyError(f"Memory not found: {memory_id}")
+            payload = json.loads(row["payload_json"])
+            payload["status"] = status
+            db.execute(
+                "UPDATE memories SET status=?,payload_json=? WHERE memory_id=?",
+                (status, _dump(payload), memory_id),
+            )
+        return payload
 
     def _add_payload(self, table: str, columns: tuple[str, ...], values: tuple[Any, ...]) -> None:
         placeholders = ",".join("?" for _ in values)

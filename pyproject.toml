@@ -17,6 +17,8 @@ dependencies = [
     "httpx>=0.27,<1",
     "edge-tts>=6.1,<8",
     "playwright>=1.47,<2",
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.34,<1",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +35,7 @@ x2video = "x2video.cli.main:app"
 include = ["x2video*"]
 
 [tool.setuptools.package-data]
-x2video = ["pipeline/*.html", "prompts/*.md"]
+x2video = ["pipeline/*.html", "prompts/*.md", "api/static/**/*", "evals/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

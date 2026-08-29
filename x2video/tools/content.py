@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import Any
 from x2video.domain.models import (
     Artifact,
     ClaimEvidence,
+    ClaimEvidenceMap,
     EditorialDecision,
     EvidencePack,
     EvidenceSource,
@@ -97,7 +99,15 @@ class EvidenceResearchTool(AgentTool):
         candidates = _read(_root(context) / "candidates.json")["candidates"]
         packs = []
         for candidate in candidates:
-            _envelope, risks = envelope_untrusted(candidate["text"])
+            context_parts = [
+                str(candidate.get("thread_context") or ""),
+                str(candidate.get("quoted_context") or ""),
+            ]
+            source_text = "\n".join([candidate["text"], *context_parts]).strip()
+            _envelope, risks = envelope_untrusted(source_text)
+            content_type = str(candidate.get("content_type") or "post")
+            if content_type == "meme":
+                risks.append("meme_or_satire")
             support = int(candidate.get("independent_support", 0))
             if support == 0:
                 risks.append("single_unverified_source")
@@ -105,10 +115,12 @@ class EvidenceResearchTool(AgentTool):
                 run_id=context.run_id,
                 source_id=f"source_{candidate['id']}",
                 url=candidate["url"],
-                source_type="x_post",
+                source_type={"thread": "x_thread", "quote": "x_quote", "meme": "x_meme"}.get(
+                    content_type, "x_post"
+                ),
                 title=f"@{candidate['author_username']} 的原始发布",
                 author=candidate["author_name"],
-                excerpt=candidate["text"],
+                excerpt=source_text,
                 trust_signals=(
                     ["verified_author"] if candidate.get("author_verified") else []
                 ) + [f"independent_support:{support}"],
@@ -209,15 +221,27 @@ class PortfolioCuratorTool(AgentTool):
             else:
                 decision.alternatives = selected_ids[:1]
             self.store.add_decision(decision)
+        shortage = len(selected_ids) < 3
         path = _write(
             _root(context) / "curation.json",
-            {"selected_ids": selected_ids, "decisions": decisions},
+            {
+                "selected_ids": selected_ids,
+                "decisions": decisions,
+                "candidate_shortage": shortage,
+            },
         )
         artifact = _artifact(context.run_id, "editorial_decisions", path)
         return ToolResult(
-            summary=f"组合选择 {len(selected_ids)} 个 Pick，淘汰 {len(decisions) - len(selected_ids)} 个",
+            summary=(
+                f"组合选择 {len(selected_ids)} 个 Pick，淘汰 {len(decisions) - len(selected_ids)} 个"
+                + ("；可信 Candidate 不足，明确降级为短 Digest" if shortage else "")
+            ),
             artifacts=[artifact],
-            payload={"selected_ids": selected_ids, "rejected": len(decisions) - len(selected_ids)},
+            payload={
+                "selected_ids": selected_ids,
+                "rejected": len(decisions) - len(selected_ids),
+                "candidate_shortage": shortage,
+            },
         )
 
 
@@ -253,10 +277,24 @@ class ScriptComposeTool(AgentTool):
             tags=["AI", "科技", "X2Video"],
         )
         path = _write(root / "script.draft.json", script)
-        artifact = _artifact(context.run_id, "script_draft", path)
+        claim_maps = [
+            ClaimEvidenceMap(
+                run_id=context.run_id,
+                segment_id=segment.segment_id,
+                claim_ids=[claim["claim_id"] for claim in packs[segment.pick_id]["claims"]],
+                evidence_ids=segment.evidence_ids,
+                coverage=1.0 if segment.evidence_ids else 0.0,
+            )
+            for segment in script.segments
+        ]
+        claim_map_path = _write(root / "claim_map.json", {"items": claim_maps})
+        artifacts = [
+            _artifact(context.run_id, "script_draft", path),
+            _artifact(context.run_id, "claim_evidence_map", claim_map_path),
+        ]
         return ToolResult(
             summary=f"生成 {len(segments)} 段有 Evidence 引用的 Script 初稿",
-            artifacts=[artifact],
+            artifacts=artifacts,
             payload={"segment_count": len(segments), "injected_issue": True},
             llm_calls=1,
             cost_usd=0.012,
@@ -313,15 +351,25 @@ class ScriptReviewTool(AgentTool):
 class StoryboardTool(AgentTool):
     name = "visual.storyboard"
 
+    def __init__(self, store: RunStore) -> None:
+        self.store = store
+
     async def execute(self, context: ToolContext) -> ToolResult:
         root = _root(context)
         script = GroundedScript.model_validate(_read(root / "script.final.json"))
+        snapshot = self.store.snapshot(context.run_id) or {}
+        format_name = str((snapshot.get("plan") or {}).get("format", "news_recap"))
+        scene_template = {
+            "news_recap": "tweet_card",
+            "single_explainer": "explainer_card",
+            "thread_story": "thread_card",
+        }.get(format_name, "tweet_card")
         scenes = [
             ScenePlan(
                 pick_id=segment.pick_id,
                 narration_ref=segment.segment_id,
                 visual_source_ids=segment.evidence_ids,
-                template="tweet_card",
+                template=scene_template,
                 duration_seconds=6.0,
                 overlay_text=[segment.narration[:18]],
                 attribution=f"source:{segment.pick_id}",
@@ -330,7 +378,7 @@ class StoryboardTool(AgentTool):
         ]
         storyboard = Storyboard(
             run_id=context.run_id,
-            template="news_recap",
+            template=format_name,
             scenes=scenes,
             expected_duration_seconds=sum(scene.duration_seconds for scene in scenes),
         )
@@ -390,7 +438,9 @@ class QualityReviewTool(AgentTool):
     async def execute(self, context: ToolContext) -> ToolResult:
         root = _root(context)
         manifest = _read(root / "publish_kit" / "render_manifest.json")
-        duration = _probe_duration(Path(manifest["video"]))
+        video_path = Path(manifest["video"])
+        duration = _probe_duration(video_path)
+        media_checks = _probe_media_checks(video_path)
         issues = []
         if manifest["subtitle_bottom"] > manifest["safe_area_bottom"]:
             issue = QualityIssue(
@@ -407,10 +457,54 @@ class QualityReviewTool(AgentTool):
             )
             self.store.add_quality_issue(issue)
             issues.append(issue)
+        if media_checks["black_segments"]:
+            issue = QualityIssue(
+                run_id=context.run_id,
+                issue_id=f"quality_{context.run_id}_black_frame",
+                code="BLACK_FRAME",
+                category="visual",
+                severity="blocker",
+                evidence=media_checks["black_segments"],
+                description="FFmpeg blackdetect found a sustained black frame.",
+            )
+            self.store.add_quality_issue(issue)
+            issues.append(issue)
+        if media_checks["silence_segments"]:
+            issue = QualityIssue(
+                run_id=context.run_id,
+                issue_id=f"quality_{context.run_id}_silence",
+                code="UNEXPECTED_SILENCE",
+                category="audio",
+                severity="blocker",
+                evidence=media_checks["silence_segments"],
+                description="FFmpeg silencedetect found sustained silence.",
+            )
+            self.store.add_quality_issue(issue)
+            issues.append(issue)
+        if media_checks["mean_volume_db"] is not None and media_checks["mean_volume_db"] > -12:
+            issue = QualityIssue(
+                run_id=context.run_id,
+                issue_id=f"quality_{context.run_id}_loudness",
+                code="AUDIO_TOO_LOUD",
+                category="audio",
+                severity="error",
+                evidence=[f"mean_volume={media_checks['mean_volume_db']}dB"],
+                description="FFmpeg volumedetect reports an overly loud mix.",
+            )
+            self.store.add_quality_issue(issue)
+            issues.append(issue)
         report = {
             "schema_version": "1.0",
             "duration_seconds": duration,
-            "checks": {"video_exists": True, "cover_exists": True, "safe_area": not issues},
+            "checks": {
+                "video_exists": True,
+                "cover_exists": True,
+                "safe_area": not any(item.code == "SUBTITLE_SAFE_AREA" for item in issues),
+                "black_frames": not media_checks["black_segments"],
+                "silence": not media_checks["silence_segments"],
+                "loudness": not any(item.code == "AUDIO_TOO_LOUD" for item in issues),
+            },
+            "ffmpeg_diagnostics": media_checks,
             "issues": [issue.model_dump(mode="json") for issue in issues],
         }
         path = _write(root / "publish_kit" / "qc.before.json", report)
@@ -418,7 +512,11 @@ class QualityReviewTool(AgentTool):
         return ToolResult(
             summary=f"QC 完成：检出 {len(issues)} 个可定位问题",
             artifacts=[artifact],
-            payload={"issue_count": len(issues), "blockers": 0, "auto_fixable": len(issues)},
+            payload={
+                "issue_count": len(issues),
+                "blockers": sum(item.severity == "blocker" for item in issues),
+                "auto_fixable": sum(item.auto_fixable for item in issues),
+            },
         )
 
 
@@ -454,14 +552,23 @@ class RepairTool(AgentTool):
                 )
             )
         _write(manifest_path, manifest)
+        unresolved_after = [
+            item
+            for item in self.store.payloads("quality_issues", context.run_id)
+            if not item.get("resolved")
+        ]
         regression = {
             "schema_version": "1.0",
-            "ok": manifest["subtitle_bottom"] <= manifest["safe_area_bottom"],
+            "ok": manifest["subtitle_bottom"] <= manifest["safe_area_bottom"] and not unresolved_after,
             "checks": {"safe_area": True, "video_rebuilt": bool(actions)},
             "actions": [action.model_dump(mode="json") for action in actions],
+            "unresolved": unresolved_after,
         }
         repair_path = _write(root / "publish_kit" / "repair.json", {"actions": actions})
         qc_path = _write(root / "publish_kit" / "qc.after.json", regression)
+        if unresolved_after:
+            codes = ", ".join(str(item.get("code")) for item in unresolved_after)
+            raise RuntimeError(f"QC blockers remain unresolved: {codes}")
         artifacts = [
             _artifact(context.run_id, "repair_report", repair_path),
             _artifact(context.run_id, "quality_report_after", qc_path),
@@ -481,7 +588,7 @@ def register_content_tools(registry: Any, store: RunStore) -> None:
         PortfolioCuratorTool(store),
         ScriptComposeTool(),
         ScriptReviewTool(store),
-        StoryboardTool(),
+        StoryboardTool(store),
         ProducerTool(),
         QualityReviewTool(store),
         RepairTool(store),
@@ -508,10 +615,98 @@ def _probe_duration(path: Path) -> float:
     return round(float(result.stdout.strip()), 3)
 
 
+def _probe_media_checks(path: Path) -> dict[str, Any]:
+    result = subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-i",
+            str(path),
+            "-vf",
+            "blackdetect=d=0.35:pix_th=0.02",
+            "-af",
+            "silencedetect=n=-50dB:d=0.5,volumedetect",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    output = result.stderr
+    black_segments = [line.strip() for line in output.splitlines() if "black_start:" in line]
+    silence_segments = [line.strip() for line in output.splitlines() if "silence_start:" in line]
+    match = re.search(r"mean_volume:\s*(-?[0-9.]+) dB", output)
+    return {
+        "black_segments": black_segments,
+        "silence_segments": silence_segments,
+        "mean_volume_db": float(match.group(1)) if match else None,
+    }
+
+
 def _render_demo_media(video: Path, cover: Path, *, repaired: bool) -> None:
     if shutil.which("ffmpeg") is None:
         raise RuntimeError("ffmpeg is required for Demo Mode production")
-    color = "0x10243a" if repaired else "0x172033"
+    color = "0x0b1726" if repaired else "0x121a2a"
+    regular_font = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    bold_font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    if not Path(regular_font).exists() or not Path(bold_font).exists():
+        raise RuntimeError("Demo Mode requires the bundled DejaVu Sans system font")
+    subtitle_y = 1620 if repaired else 1775
+    common = [
+        "drawbox=x=0:y=0:w=1080:h=16:color=0xf1ae52:t=fill",
+        "drawtext="
+        f"fontfile={bold_font}:text='X2VIDEO  //  AGENT STUDIO':"
+        "x=76:y=76:fontsize=32:fontcolor=0xf1ae52",
+        "drawtext="
+        f"fontfile={regular_font}:text='EVIDENCE-LED AI BRIEFING':"
+        "x=76:y=128:fontsize=22:fontcolor=0x8fa0b7",
+        "drawbox=x=76:y=220:w=928:h=2:color=0x344154:t=fill",
+        "drawtext="
+        f"fontfile={regular_font}:text='29 AUG 2026  /  3 VERIFIED SIGNALS':"
+        "x=76:y=256:fontsize=24:fontcolor=white@0.78",
+    ]
+    scenes = [
+        (0, 2.66, "01", "COMPACT MODEL RELEASE", "Weights and evaluation notes are available."),
+        (2.66, 5.33, "02", "GRADUAL FEATURE ROLLOUT", "Availability is expanding to selected accounts."),
+        (5.33, 8.1, "03", "BENCHMARK UPDATE", "New multilingual agent results were published."),
+    ]
+    scene_filters = []
+    for start, end, number, title, subtitle in scenes:
+        enabled = f"enable='between(t,{start},{end})'"
+        scene_filters.extend(
+            [
+                f"drawbox=x=76:y=390:w=928:h=720:color=0x111f31:t=fill:{enabled}",
+                f"drawbox=x=76:y=390:w=10:h=720:color=0xf1ae52:t=fill:{enabled}",
+                "drawtext="
+                f"fontfile={bold_font}:text='SIGNAL {number}':x=124:y=455:"
+                f"fontsize=28:fontcolor=0xf1ae52:{enabled}",
+                "drawtext="
+                f"fontfile={bold_font}:text='{title}':x=124:y=570:"
+                f"fontsize=50:fontcolor=white:{enabled}",
+                "drawtext="
+                f"fontfile={regular_font}:text='{subtitle}':x=124:y=680:"
+                f"fontsize=27:fontcolor=0xb8c4d4:{enabled}",
+                f"drawbox=x=124:y=820:w=650:h=8:color=0x59c3d7:t=fill:{enabled}",
+                "drawtext="
+                f"fontfile={regular_font}:text='SOURCE VERIFIED   //   CONFIDENCE HIGH':"
+                f"x=124:y=875:fontsize=21:fontcolor=0x61c68b:{enabled}",
+                f"drawbox=x=76:y={subtitle_y}:w=928:h=92:color=black@0.78:t=fill:{enabled}",
+                "drawtext="
+                f"fontfile={regular_font}:text='{subtitle}':x=(w-text_w)/2:y={subtitle_y + 29}:"
+                f"fontsize=25:fontcolor=white:{enabled}",
+            ]
+        )
+    video_filter = ",".join(
+        common
+        + scene_filters
+        + [
+            "drawtext="
+            f"fontfile={regular_font}:text='GROUNDING ON  /  REPAIR PASS 1 OF 2':"
+            "x=76:y=1860:fontsize=18:fontcolor=0x687587"
+        ]
+    )
     video.parent.mkdir(parents=True, exist_ok=True)
     video_result = subprocess.run(
         [
@@ -524,15 +719,19 @@ def _render_demo_media(video: Path, cover: Path, *, repaired: bool) -> None:
             "-f",
             "lavfi",
             "-i",
-            "anullsrc=r=48000:cl=stereo",
+            "sine=frequency=220:sample_rate=48000:duration=8",
             "-t",
             "8",
+            "-vf",
+            video_filter,
             "-c:v",
             "libx264",
             "-pix_fmt",
             "yuv420p",
             "-c:a",
             "aac",
+            "-af",
+            "volume=0.035",
             "-shortest",
             str(video),
         ],
@@ -542,6 +741,33 @@ def _render_demo_media(video: Path, cover: Path, *, repaired: bool) -> None:
     )
     if video_result.returncode:
         raise RuntimeError(f"Demo video render failed: {video_result.stderr[-1000:]}")
+    cover_filter = ",".join(
+        [
+            "drawbox=x=0:y=0:w=1080:h=18:color=0xf1ae52:t=fill",
+            "drawbox=x=80:y=128:w=88:h=88:color=0xf1ae52:t=fill",
+            "drawtext="
+            f"fontfile={bold_font}:text='X2':x=101:y=149:fontsize=44:fontcolor=0x15100a",
+            "drawtext="
+            f"fontfile={bold_font}:text='X2VIDEO':x=194:y=132:fontsize=44:fontcolor=white",
+            "drawtext="
+            f"fontfile={regular_font}:text='AGENT STUDIO':x=196:y=184:fontsize=20:"
+            "fontcolor=0x8fa0b7",
+            "drawtext="
+            f"fontfile={bold_font}:text='AI SIGNALS':x=80:y=430:fontsize=104:fontcolor=white",
+            "drawtext="
+            f"fontfile={bold_font}:text='BRIEFING':x=80:y=548:fontsize=104:fontcolor=0xf1ae52",
+            "drawbox=x=80:y=720:w=920:h=2:color=0x344154:t=fill",
+            "drawtext="
+            f"fontfile={regular_font}:text='03 VERIFIED STORIES':x=80:y=780:fontsize=30:"
+            "fontcolor=0x61c68b",
+            "drawtext="
+            f"fontfile={regular_font}:text='Evidence mapped  /  Claims reviewed  /  QC repaired':"
+            "x=80:y=850:fontsize=24:fontcolor=0xb8c4d4",
+            "drawtext="
+            f"fontfile={regular_font}:text='29 AUG 2026':x=80:y=1280:fontsize=24:"
+            "fontcolor=0x687587",
+        ]
+    )
     cover_result = subprocess.run(
         [
             "ffmpeg",
@@ -552,6 +778,8 @@ def _render_demo_media(video: Path, cover: Path, *, repaired: bool) -> None:
             f"color=c={color}:s=1080x1440",
             "-frames:v",
             "1",
+            "-vf",
+            cover_filter,
             "-threads",
             "1",
             str(cover),

@@ -76,6 +76,7 @@ class ContentGoal(VersionedModel):
     preferred_format: Literal["news_recap", "single_explainer", "thread_story"] | None = None
     autonomy: Literal["supervised", "assisted", "auto"] = "assisted"
     risk_tolerance: Literal["low", "medium", "high"] = "low"
+    memory_context: list[str] = Field(default_factory=list)
     budget: RunBudget = Field(default_factory=RunBudget)
 
 

@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS runs (
     updated_at TEXT NOT NULL,
     parent_run_id TEXT,
     checkpoint_task_id TEXT,
+    is_paused INTEGER NOT NULL DEFAULT 0,
     error TEXT
 );
 CREATE TABLE IF NOT EXISTS goals (
@@ -168,7 +169,16 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
 def migrate(connection: sqlite3.Connection) -> None:
     connection.executescript(SCHEMA_SQL)
+    run_columns = {
+        row["name"] if isinstance(row, sqlite3.Row) else row[1]
+        for row in connection.execute("PRAGMA table_info(runs)").fetchall()
+    }
+    if "is_paused" not in run_columns:
+        connection.execute("ALTER TABLE runs ADD COLUMN is_paused INTEGER NOT NULL DEFAULT 0")
     connection.execute(
         "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (1, datetime('now'))"
+    )
+    connection.execute(
+        "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (2, datetime('now'))"
     )
     connection.commit()

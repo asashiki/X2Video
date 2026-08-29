@@ -46,13 +46,14 @@ def build_plan(goal: ContentGoal) -> RunPlan:
         tasks.append(task)
         previous = task.task_id
     gates = [] if goal.autonomy == "auto" else ["Gate 1", "Gate 2"]
+    memory_note = f"；应用 {len(goal.memory_context)} 条已批准偏好" if goal.memory_context else ""
     return RunPlan(
         run_id=goal.run_id,
         format=format_name,
         tasks=tasks,
         decision_summary=(
             f"采用 {format_name}；{goal.autonomy} 自治等级；"
-            f"{goal.target_duration_seconds} 秒目标，最多 {goal.budget.max_candidates} 个 Candidate。"
+            f"{goal.target_duration_seconds} 秒目标，最多 {goal.budget.max_candidates} 个 Candidate{memory_note}。"
         ),
         human_gates=gates,
     )
@@ -85,4 +86,3 @@ def build_compatibility_plan(goal: ContentGoal) -> RunPlan:
         decision_summary="Compatibility Plan：由 Agent Kernel 追踪并调用 v0.1 pipeline Tools。",
         human_gates=[] if goal.autonomy == "auto" else ["Gate 1", "Gate 2"],
     )
-

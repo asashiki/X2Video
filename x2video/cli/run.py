@@ -31,6 +31,11 @@ def run(
     ),
     skip_hard_filter: bool = typer.Option(False, "--skip-hard-filter"),
     skip_ledger: bool = typer.Option(False, "--skip-ledger"),
+    autonomy: str | None = typer.Option(
+        None,
+        "--autonomy",
+        help="Compatibility autonomy: supervised, assisted, or auto",
+    ),
 ) -> None:
     """Run the full pipeline: fetch → curate → card → script → render.
 
@@ -40,7 +45,9 @@ def run(
     if from_stage not in STAGES:
         die(f"Unknown stage '{from_stage}'. Use: {', '.join(STAGES)}")
 
-    use_auto = auto or (not cfg.curation.blocking_mode)
+    if autonomy not in {None, "supervised", "assisted", "auto"}:
+        die("--autonomy must be supervised, assisted, or auto")
+    use_auto = auto or autonomy == "auto" or (not cfg.curation.blocking_mode)
     if not use_auto:
         typer.echo(
             "Gate 1 is blocking. Re-run with --auto, or set [curation].blocking_mode = false."
