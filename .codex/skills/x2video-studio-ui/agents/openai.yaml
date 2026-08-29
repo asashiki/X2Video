@@ -1,0 +1,4 @@
+interface:
+  display_name: "X2Video Studio UI"
+  short_description: "Design and visually QA the X2Video Agent Studio."
+  default_prompt: "Design or refine X2Video Agent Studio using its product UI system and screenshot QA workflow."
