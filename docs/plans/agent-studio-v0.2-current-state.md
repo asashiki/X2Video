@@ -81,13 +81,24 @@ Environment: Python 3.12.13, Node 24.19.0, FFmpeg 6.1.1.
 | `.venv/bin/x2video doctor` | Fail | FFmpeg and TTS imports pass; local auth is absent and Playwright Chromium is missing |
 | `.venv/bin/playwright install chromium` | Blocked | CDN download timed out repeatedly in this environment |
 
-No live X/LLM/TTS paid call was made during the audit. No credential was copied into the repository. A Golden Publish Kit and screenshot baseline are not yet claimed; they require the frozen Demo fixture and a working browser install.
+No live X/LLM/TTS paid call was made during the audit. No credential was copied into the repository. At the audit point a Golden Publish Kit and screenshot baseline were not claimed; both were produced later on the upgrade branch from the frozen Demo fixture and a real portable Chromium runtime.
 
 ### Phase 0 remediation on the upgrade branch
 
 - The OAuth callback test now reproduces browser navigation concurrently and bypasses environment proxies for loopback traffic.
 - Full `.venv/bin/pytest -q`: **37 passed in 0.14s**.
 - A project Ruff baseline now targets Python 3.11 and checks import/syntax/error rules; `.venv/bin/ruff check .`: **pass**.
+
+### Final upgrade evidence
+
+The historical results above remain the Phase 0 snapshot. The completed branch adds:
+
+- frozen Demo, Thread/Quote/Meme and media-defect fixtures;
+- a reproducible Golden Demo Publish Kit under `artifacts/golden-publish-kit/`;
+- 10/10 consecutive real FFmpeg Demo runs recorded in `artifacts/demo-stability.json`;
+- fixed 30-case baseline/v0.2 reports under `evals/reports/`;
+- real-browser screenshots for all eight Studio routes at two viewports under `artifacts/ui-qa/2026-08-29/`;
+- compatibility-plan wrapper tests plus the unchanged legacy pipeline tests.
 
 ## Principal gaps and risks
 
@@ -104,8 +115,8 @@ No live X/LLM/TTS paid call was made during the audit. No credential was copied 
 ## Phase 0 exit criteria
 
 - Fix the hanging OAuth test without weakening the production flow. **Completed.**
-- Establish a frozen Candidate/Evidence fixture and deterministic compatibility run.
-- Produce a Golden Publish Kit or explicitly record the remaining browser/TTS blocker.
-- Add compatibility tests for legacy commands and paths.
+- Establish a frozen Candidate/Evidence fixture and deterministic compatibility run. **Completed.**
+- Produce a Golden Publish Kit or explicitly record the remaining browser/TTS blocker. **Completed in offline Demo Mode; live-source verification remains separate.**
+- Add compatibility tests for legacy commands and paths. **Completed.**
 - Bring `ruff check .` to green or define a narrow, documented configuration baseline before new code expands. **Completed.**
 - Commit this audit, ADR-0010, the implementation checklist, and the validated Studio UI Skill.

@@ -1,12 +1,48 @@
-# X2Video
+# X2Video Agent Studio
 
-抓取 X（Twitter）上某一领域（MVP：AI/科技圈）的热点推文，经两层筛选、双语卡片渲染、中文解说文案生成，自动合成竖屏短视频（抖音/B站），产出可直接上传的 Publish Kit。
+把一个自然语言内容目标变成可追溯、可审查、可修复的竖屏视频 Publish Kit。v0.2 在保留 v0.1 CLI 和确定性视频管线的基础上，加入有边界 Content Director、EvidencePack、编辑组合、脚本 Critic、成片 QC、局部修复和本地 Agent Studio。
 
 **为什么做这个**：外网（尤其 X）上的优质热点内容与中文短视频平台之间存在信息差。这个项目把"发现热帖 → 翻译 → 解说 → 成片"的搬运链路自动化，人只保留两个把关点：选题和审片。
 
+## 三分钟跑通离线 Demo
+
+Demo Mode 使用仓库内冻结数据，不调用实时 X、LLM 或 TTS 网络；FFmpeg 仍会真实生成 MP4、封面和前后 QC 报告。
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+
+x2video doctor
+x2video agent run --goal "做一条 60 秒以内的今日 AI 新闻，避免重复，优先可信信息" --autonomy auto
+x2video studio
+# 打开 http://127.0.0.1:8765
+```
+
+Studio 默认只监听 `127.0.0.1`。它包含 Dashboard、Intent Composer、Agent Timeline、Curation Board、Script/Storyboard、QC Lab、Memory/Benchmarks 和 Settings/Doctor；页面读取同一 SQLite RunStore，不伪造 Agent 活动。
+
+常用控制面命令：
+
+```bash
+x2video replay RUN_ID
+x2video feedback RUN_ID --comment "以后优先保留有公开评测集的消息"
+x2video eval run --profile baseline
+x2video eval run --profile v0.2
+x2video eval compare BASELINE_ID NEW_ID
+```
+
+可复现证明位于：
+
+- `artifacts/golden-publish-kit/`：真实 MP4、封面、Trace、脚本 Diff、修复前后 QC；
+- `artifacts/demo-stability.json`：10 次连续离线 Demo 的逐次结果；
+- `artifacts/ui-qa/2026-08-29/`：1440×1000 与 390×844 的真实浏览器截图；
+- `evals/reports/`：固定 30-case 的 JSON、Markdown、HTML 与基线对比。
+
+更多说明见 [Agent 架构](./docs/architecture-agent-studio.md)、[三分钟演示](./docs/demo/three-minute-demo.md) 和 [验证报告](./docs/demo/verification-report.md)。
+
 ## 项目状态
 
-管线已可本地跑通：`fetch → curate → card → script → render`，产出 `final/` 下的 Publish Kit。X 官方 MCP（issue #1）仍是占位，默认走 SuperGrok OAuth + X Search。蒸馏（issue #6）目前用手写初版 prompt。
+两条路径并存：原 `fetch → curate → card → script → render` 管线继续产出 `final/`；新 Agent Kernel 通过版本化 Schema、SQLite、Trace 和 Tool Registry 驱动冻结 Demo 与 Studio。X 官方 MCP（issue #1）仍是占位，默认真实数据路径仍为 SuperGrok；这项非比赛 P0，不应被描述成已完成。Issue #6 的对标原料目录仍为空，因此本次只交付版本化 Eval/报告和可审批 Memory，不宣称已完成真实样本蒸馏。
 
 MVP 范围：AI/科技圈领域、Digest（N=1 为单推文特例）、人工上传。后期方向：领域可配置、多内容源、英文版输出、剪映草稿导出等。
 
@@ -58,6 +94,13 @@ x2video --help
 ```
 
 系统还需本机 `ffmpeg` / `ffprobe`（合成竖屏 MP4）。
+
+若 Chromium 安装在非 Playwright 默认位置，可设置：
+
+```bash
+export X2VIDEO_BROWSER_EXECUTABLE=/absolute/path/to/chromium
+x2video doctor
+```
 
 ## 配置
 

@@ -1,0 +1,20 @@
+{
+  "actions": [
+    {
+      "schema_version": "1.0",
+      "run_id": "run_a2bb7db106c24b46a9efaedecebb7981",
+      "created_at": "2026-08-29T16:11:46.394654Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "repair_id": "repair_1dda21bb0b6e48d5b26617d4af33d647",
+      "issue_id": "quality_run_a2bb7db106c24b46a9efaedecebb7981_safe_area",
+      "handler": "subtitle_safe_area_patch",
+      "invalidated_artifact_ids": [],
+      "before_artifact_ids": [],
+      "after_artifact_ids": [],
+      "summary": "将字幕底边移回安全区并只重渲染受影响场景。",
+      "attempt": 1,
+      "succeeded": true
+    }
+  ]
+}
