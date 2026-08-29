@@ -8,8 +8,8 @@ This is the reviewable implementation ledger. A checked item requires a test, Ar
 - [x] Record current architecture, commands, output paths, Issue status, and observed baseline failures.
 - [x] Add ADR-0010 for the bounded Agent Kernel.
 - [x] Add and validate the project-local `x2video-studio-ui` Skill.
-- [ ] Fix the OAuth test hang and make full `pytest -q` terminate.
-- [ ] Establish a clean lint baseline.
+- [x] Fix the OAuth test hang and make full `pytest -q` terminate.
+- [x] Establish a clean lint baseline.
 - [ ] Add frozen Demo Candidate/Evidence fixtures.
 - [ ] Save a reproducible Golden Publish Kit and baseline metrics.
 - [ ] Record compatibility command/path tests.

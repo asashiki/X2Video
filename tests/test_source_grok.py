@@ -10,7 +10,7 @@ import httpx
 import pytest
 
 from x2video.auth.store import write_auth
-from x2video.config.schema import HardFilterConfig, SourceConfig, X2VideoConfig
+from x2video.config.schema import SourceConfig, X2VideoConfig
 from x2video.source.factory import create_source
 from x2video.source.grok import (
     GrokXSearchSource,

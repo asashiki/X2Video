@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from x2video.config.schema import HardFilterConfig
-from datetime import datetime, timedelta, timezone
-
 from x2video.pipeline.card import (
     build_card_html,
     build_cover_html,

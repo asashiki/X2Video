@@ -6,7 +6,6 @@ When ``api_key`` is empty, uses the SuperGrok OAuth access token.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import httpx

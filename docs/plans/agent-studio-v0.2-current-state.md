@@ -83,6 +83,12 @@ Environment: Python 3.12.13, Node 24.19.0, FFmpeg 6.1.1.
 
 No live X/LLM/TTS paid call was made during the audit. No credential was copied into the repository. A Golden Publish Kit and screenshot baseline are not yet claimed; they require the frozen Demo fixture and a working browser install.
 
+### Phase 0 remediation on the upgrade branch
+
+- The OAuth callback test now reproduces browser navigation concurrently and bypasses environment proxies for loopback traffic.
+- Full `.venv/bin/pytest -q`: **37 passed in 0.14s**.
+- A project Ruff baseline now targets Python 3.11 and checks import/syntax/error rules; `.venv/bin/ruff check .`: **pass**.
+
 ## Principal gaps and risks
 
 1. The new runtime needs a transactional state model without breaking the file-based CLI.
@@ -97,10 +103,9 @@ No live X/LLM/TTS paid call was made during the audit. No credential was copied 
 
 ## Phase 0 exit criteria
 
-- Fix the hanging OAuth test without weakening the production flow.
+- Fix the hanging OAuth test without weakening the production flow. **Completed.**
 - Establish a frozen Candidate/Evidence fixture and deterministic compatibility run.
 - Produce a Golden Publish Kit or explicitly record the remaining browser/TTS blocker.
 - Add compatibility tests for legacy commands and paths.
-- Bring `ruff check .` to green or define a narrow, documented configuration baseline before new code expands.
+- Bring `ruff check .` to green or define a narrow, documented configuration baseline before new code expands. **Completed.**
 - Commit this audit, ADR-0010, the implementation checklist, and the validated Studio UI Skill.
-

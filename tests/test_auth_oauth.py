@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
+import threading
 import time
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -166,10 +166,15 @@ def test_login_pkce_flow_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         qs = parse_qs(urlparse(url).query)
         state = qs["state"][0]
         redirect = qs["redirect_uri"][0]
-        # Hit the local callback the same way the browser would.
-        with httpx.Client() as c:
-            r = c.get(redirect, params={"code": "auth-code-1", "state": state})
-            assert r.status_code == 200
+
+        # A real browser returns from open() before navigating to the callback.
+        # Run the fake navigation concurrently so login() can enter its server loop.
+        def visit_callback() -> None:
+            with httpx.Client(trust_env=False) as c:
+                r = c.get(redirect, params={"code": "auth-code-1", "state": state})
+                captured["callback_status"] = str(r.status_code)
+
+        threading.Thread(target=visit_callback, daemon=True).start()
         return True
 
     transport = httpx.MockTransport(handler)
@@ -184,6 +189,7 @@ def test_login_pkce_flow_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert result["access_token"] == "login-access"
     assert result["refresh_token"] == "login-refresh"
     assert "code_challenge" in captured["url"]
+    assert captured["callback_status"] == "200"
     assert read_auth(path)["access_token"] == "login-access"
 
 
