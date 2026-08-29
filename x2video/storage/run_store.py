@@ -19,6 +19,7 @@ from x2video.domain.models import (
     RunEvent,
     RunPlan,
     RunState,
+    ScriptIssue,
     TaskStatus,
     ToolCall,
     UserFeedback,
@@ -280,6 +281,23 @@ class RunStore:
             ),
         )
 
+    def add_script_issue(self, issue: ScriptIssue) -> None:
+        self._add_payload(
+            "script_issues",
+            ("issue_id", "run_id", "severity", "resolved", "payload_json", "created_at"),
+            (
+                issue.issue_id,
+                issue.run_id,
+                issue.severity,
+                int(issue.resolved),
+                _dump(issue),
+                issue.created_at.isoformat(),
+            ),
+        )
+
+    def resolve_quality_issue(self, issue: QualityIssue) -> None:
+        self.add_quality_issue(issue.model_copy(update={"resolved": True}))
+
     def add_feedback(self, feedback: UserFeedback) -> None:
         self._add_payload(
             "feedback",
@@ -317,7 +335,15 @@ class RunStore:
             )
 
     def payloads(self, table: str, run_id: str) -> list[dict[str, Any]]:
-        allowed = {"evidence", "decisions", "quality_issues", "feedback", "memories", "artifacts"}
+        allowed = {
+            "evidence",
+            "decisions",
+            "script_issues",
+            "quality_issues",
+            "feedback",
+            "memories",
+            "artifacts",
+        }
         if table not in allowed:
             raise ValueError(f"Unsupported payload table: {table}")
         with self.transaction() as db:
@@ -341,6 +367,7 @@ class RunStore:
             "events": self.list_events(run_id),
             "evidence": self.payloads("evidence", run_id),
             "decisions": self.payloads("decisions", run_id),
+            "script_issues": self.payloads("script_issues", run_id),
             "quality_issues": self.payloads("quality_issues", run_id),
             "artifacts": self.payloads("artifacts", run_id),
         }

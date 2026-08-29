@@ -193,6 +193,25 @@ class ScriptIssue(VersionedModel):
     resolved: bool = False
 
 
+class GroundedSegment(BaseModel):
+    segment_id: str = Field(default_factory=lambda: new_id("segment"))
+    pick_id: str
+    narration: str
+    evidence_ids: list[str] = Field(default_factory=list)
+    locked: bool = False
+    revision: int = 1
+
+
+class GroundedScript(VersionedModel):
+    script_id: str = Field(default_factory=lambda: new_id("script"))
+    hook: str
+    segments: list[GroundedSegment] = Field(default_factory=list)
+    outro: str = ""
+    title_suggestions: list[str] = Field(default_factory=list)
+    description: str = ""
+    tags: list[str] = Field(default_factory=list)
+
+
 class ClaimEvidenceMap(VersionedModel):
     segment_id: str
     claim_ids: list[str] = Field(default_factory=list)
@@ -281,4 +300,3 @@ class EvalResult(VersionedModel):
     metrics: dict[str, float] = Field(default_factory=dict)
     issues: list[str] = Field(default_factory=list)
     baseline_id: str | None = None
-
