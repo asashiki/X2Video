@@ -8,7 +8,8 @@ from __future__ import annotations
 import typer
 from rich.console import Console
 
-from x2video.cli import auth, card, curate, doctor, fetch, render, run, script
+from x2video.application import ApplicationService
+from x2video.cli import agent, auth, card, curate, doctor, eval, fetch, render, run, script
 from x2video.config.loader import load_config
 
 console = Console(stderr=True)
@@ -19,7 +20,7 @@ app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
-_NO_CONFIG = {"auth", "doctor"}
+_NO_CONFIG = {"agent", "auth", "doctor", "eval", "feedback", "replay", "studio"}
 
 
 @app.callback()
@@ -58,3 +59,51 @@ app.add_typer(card.app, name="card", help="Render bilingual tweet cards")
 app.add_typer(script.app, name="script", help="Generate Chinese narration script")
 app.add_typer(render.app, name="render", help="Synthesize TTS audio and compose final MP4")
 app.add_typer(run.app, name="run", help="Execute the full pipeline end-to-end")
+app.add_typer(agent.app, name="agent", help="Execute a bounded Content Director plan")
+app.add_typer(eval.app, name="eval", help="Run or compare the fixed evaluation suite")
+
+
+@app.command("replay")
+def replay(
+    run_id: str,
+    work_dir: str = typer.Option("work", help="Agent control-plane directory"),
+) -> None:
+    """Replay a durable Run trace without repeating side effects."""
+    import json
+
+    service = ApplicationService(work_dir=work_dir)
+    try:
+        typer.echo(json.dumps(service.runtime.replay(run_id), ensure_ascii=False, indent=2))
+    except KeyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+
+@app.command("feedback")
+def feedback(
+    run_id: str,
+    comment: str = typer.Option(..., prompt=True, help="Concrete feedback for this Run"),
+    category: str = typer.Option("preference", help="selection, script, visual, quality, preference, other"),
+    rating: int | None = typer.Option(None, min=1, max=5),
+    work_dir: str = typer.Option("work", help="Agent control-plane directory"),
+) -> None:
+    """Record feedback and create an auditable, pending memory candidate."""
+    service = ApplicationService(work_dir=work_dir)
+    try:
+        result = service.feedback(run_id, category=category, comment=comment, rating=rating)
+    except (KeyError, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"feedback={result['feedback_id']} memory={result.get('memory_id', 'none')} status=pending")
+
+
+@app.command("studio")
+def studio(
+    host: str = typer.Option("127.0.0.1", help="Bind address; local-only by default"),
+    port: int = typer.Option(8765, min=1, max=65535),
+    reload: bool = typer.Option(False, help="Enable development reload"),
+) -> None:
+    """Start the FastAPI control plane and packaged React Studio."""
+    import uvicorn
+
+    uvicorn.run("x2video.api.app:app", host=host, port=port, reload=reload)

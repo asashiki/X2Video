@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "frozen_at": "2026-08-29T00:00:00Z",
+  "candidates": [
+    {
+      "id": "context-thread",
+      "text": "A team posted the first result in a three-part release thread.",
+      "thread_context": "Part two links the weights. Part three publishes the evaluation notes.",
+      "content_type": "thread",
+      "url": "https://example.invalid/thread",
+      "author_username": "researchteam",
+      "author_name": "Research Team",
+      "author_verified": true,
+      "independent_support": 2,
+      "likes": 8200,
+      "media_urls": ["fixture://media/thread.png"],
+      "fixture_claims": ["完整 Thread 提供了权重链接与评测说明"]
+    },
+    {
+      "id": "context-quote",
+      "text": "An engineer added a measured caveat to the quoted launch claim.",
+      "quoted_context": "The original post says rollout starts with selected accounts, not everyone.",
+      "content_type": "quote",
+      "url": "https://example.invalid/quote",
+      "author_username": "engineer",
+      "author_name": "Independent Engineer",
+      "author_verified": true,
+      "independent_support": 2,
+      "likes": 6400,
+      "media_urls": [],
+      "fixture_claims": ["引用上下文限定为部分账号逐步开放"]
+    },
+    {
+      "id": "context-meme",
+      "text": "A joke image claims every model became free overnight.",
+      "content_type": "meme",
+      "url": "https://example.invalid/meme",
+      "author_username": "jokeaccount",
+      "author_name": "Joke Account",
+      "author_verified": false,
+      "independent_support": 0,
+      "likes": 20000,
+      "media_urls": ["fixture://media/meme.png"],
+      "fixture_claims": ["所有模型一夜之间全部免费"]
+    }
+  ]
+}

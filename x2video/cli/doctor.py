@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
@@ -55,10 +56,14 @@ def doctor(
         failed = True
 
     try:
-        from playwright.sync_api import sync_playwright
+        configured_executable = os.environ.get("X2VIDEO_BROWSER_EXECUTABLE")
+        if configured_executable:
+            exe = Path(configured_executable)
+        else:
+            from playwright.sync_api import sync_playwright
 
-        with sync_playwright() as pw:
-            exe = Path(pw.chromium.executable_path)
+            with sync_playwright() as pw:
+                exe = Path(pw.chromium.executable_path)
         if exe.exists():
             _ok("playwright", str(exe))
         else:

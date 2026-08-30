@@ -1,0 +1,506 @@
+{
+  "schema_version": "1.0",
+  "report_id": "eval_v02_20260829T161129_bedb12",
+  "profile": "v0.2",
+  "created_at": "2026-08-29T16:11:29.033199+00:00",
+  "dataset_size": 30,
+  "summary": {
+    "passed": 30,
+    "failed": 0,
+    "pass_rate": 1.0
+  },
+  "proof": {
+    "run_id": "run_217db2aa1a7947fb8db046648c78e309",
+    "event_count": 20,
+    "selected_count": 3,
+    "video_bytes": 133991,
+    "context_run_id": "run_eec19ba2f8c640098a6191d4d4690209"
+  },
+  "results": [
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.032974Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_fd98be69d44345e486beb594707fe2e8",
+      "case_id": "eval-001",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033007Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_80abe7004248426283a602e1389ed2a8",
+      "case_id": "eval-002",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033019Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_b4e64230abf747a49226aa684729c7ff",
+      "case_id": "eval-003",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033027Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_74fd7fae74bb44c580d5b7ee2422814b",
+      "case_id": "eval-004",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033034Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_52b49a274eac4e74b128a7d703b808e5",
+      "case_id": "eval-005",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033040Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_2cc890d8b6a74de5aa03074de1a020a8",
+      "case_id": "eval-006",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033047Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_6a0e74cf2ac34f749420cc4ef3dca788",
+      "case_id": "eval-007",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033054Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_b532fd31c37041bc8353a4f4cc1d276d",
+      "case_id": "eval-008",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033060Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_25333b588a58449c9bdbb0c4a03d1d2f",
+      "case_id": "eval-009",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033066Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_64d7784dd0dd4faf81446ecbc6015fbc",
+      "case_id": "eval-010",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033072Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_576568c6c4c2414a8dd08cd5c9f6e9c4",
+      "case_id": "eval-011",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033079Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_ae99a4641df745898bee9468d0874959",
+      "case_id": "eval-012",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033085Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_0c2414bf64a745d899b1b19e9b3a5c6f",
+      "case_id": "eval-013",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033091Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_70d68d9a7da94814a6cc92adb5cbfa05",
+      "case_id": "eval-014",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033098Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_83d75706ea784f88a4770d627143736a",
+      "case_id": "eval-015",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033104Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_0d73ab212f6d4b8f98eb08381b95bd4a",
+      "case_id": "eval-016",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033111Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_19664162b19c43f7a26027c1c9ada49e",
+      "case_id": "eval-017",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033117Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_dfc48673e39441f0a02a4f14809f3de7",
+      "case_id": "eval-018",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033123Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_78fa57fdad0141f39d34681f35cd1e6f",
+      "case_id": "eval-019",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033129Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_e4bc61abc99f440d9c3207882ffba2a3",
+      "case_id": "eval-020",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033135Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_b6a5a7e918664348b9a5e20b947bc462",
+      "case_id": "eval-021",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033141Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_505853016ff64feea1d9994f5e17d124",
+      "case_id": "eval-022",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033147Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_81a8534b18d942fe8a1970024b1ee8e5",
+      "case_id": "eval-023",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033154Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_fe3d0217d6e240b2b20abd8cd7ec33c6",
+      "case_id": "eval-024",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033160Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_669ff296955147c093438f1ea33f1e1c",
+      "case_id": "eval-025",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033167Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_cd6e84bc91904f859e5a5530f0c6f2e9",
+      "case_id": "eval-026",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033173Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_bcb6aea329244119b4211525060aeef4",
+      "case_id": "eval-027",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033179Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_ece3bd3af3a04db895a785d2c7b6ee27",
+      "case_id": "eval-028",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033185Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_2cd04f30f83149879601cabed9eae838",
+      "case_id": "eval-029",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_v02_20260829T161129_bedb12",
+      "created_at": "2026-08-29T16:11:29.033191Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_40b9e08c731a45d4896f07a1fe14f1f2",
+      "case_id": "eval-030",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": null
+    }
+  ],
+  "paths": {
+    "json": "evals/reports/eval_v02_20260829T161129_bedb12.json",
+    "markdown": "evals/reports/eval_v02_20260829T161129_bedb12.md",
+    "html": "evals/reports/eval_v02_20260829T161129_bedb12.html"
+  }
+}

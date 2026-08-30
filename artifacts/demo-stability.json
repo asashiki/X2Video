@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "created_at": "2026-08-29T16:12:32.634305+00:00",
+  "requested_runs": 10,
+  "successful_runs": 10,
+  "total_seconds": 52.368,
+  "results": [
+    {
+      "iteration": 1,
+      "run_id": "run_a2bb7db106c24b46a9efaedecebb7981",
+      "state": "COMPLETE",
+      "elapsed_seconds": 6.143,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 2,
+      "run_id": "run_1b2491f19c3f483dafc25ea0f7789b93",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.155,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 3,
+      "run_id": "run_f9da3848562c4bd292c000cf80c36ec0",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.3,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 4,
+      "run_id": "run_7cc168034b344948a1feab94203d8dcf",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.186,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 5,
+      "run_id": "run_3d3404e5a2214583bf12a62906bcc527",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.219,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 6,
+      "run_id": "run_2285652331914b85a60f79d15c8b8452",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.122,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 7,
+      "run_id": "run_d3837fe958504321822fa82ec0d575bb",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.098,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 8,
+      "run_id": "run_139046d9950d4ea4a32dbd7bf321d5f3",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.023,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 9,
+      "run_id": "run_fa7d1c948123441da35fb9c5750edbb9",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.097,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    },
+    {
+      "iteration": 10,
+      "run_id": "run_e36b793b99744b27915ef8a72367939f",
+      "state": "COMPLETE",
+      "elapsed_seconds": 5.025,
+      "event_count": 20,
+      "video_bytes": 133991,
+      "qc_ok": true,
+      "repair_count": 1
+    }
+  ]
+}

@@ -1,0 +1,558 @@
+{
+  "schema_version": "1.0",
+  "report_id": "eval_baseline_20260829T161117_cf8b1c",
+  "profile": "baseline",
+  "created_at": "2026-08-29T16:11:17.237418+00:00",
+  "dataset_size": 30,
+  "summary": {
+    "passed": 2,
+    "failed": 28,
+    "pass_rate": 0.06666666666666667
+  },
+  "proof": {
+    "source": "v0.1 frozen capability baseline"
+  },
+  "results": [
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237173Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_861ed3f9d95146649891b46e424282f9",
+      "case_id": "eval-001",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: evidence_coverage"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237221Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_c8abfb2406e7490489092dad5d1e8f0b",
+      "case_id": "eval-002",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: claim_grounding"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237233Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_6d01ce00956047aba7fe9d80cfb7f455",
+      "case_id": "eval-003",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: injection_detection"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237241Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_2fc5c1efbe31415c84d53304c223c5a9",
+      "case_id": "eval-004",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: injection_rejection"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237250Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_4ea9949de599448da4cd486f0e10093b",
+      "case_id": "eval-005",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: deduplication"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237257Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_fed3a988970744829457cd1a4844fa2b",
+      "case_id": "eval-006",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: portfolio_selection"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237264Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_f22ee0418f3843a38a957da5a80c86f6",
+      "case_id": "eval-007",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: thread_context"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237270Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_7699eb4ea199461b8846d4d650212f03",
+      "case_id": "eval-008",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: quote_context"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237276Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_36bc769d8f3e4daaa1abd9142156f01d",
+      "case_id": "eval-009",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: meme_risk"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237283Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_ba776a05a42141b790fd848824b6a5ff",
+      "case_id": "eval-010",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237289Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_c6c870fce862430cb9960ac2e753cc65",
+      "case_id": "eval-011",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: multilingual_grounding"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237296Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_e44cda6572e04d208a2e1243e434155a",
+      "case_id": "eval-012",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: high_risk_block"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237302Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_28a83805f91d4c63942b6fdcfdd1f39b",
+      "case_id": "eval-013",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: candidate_shortage"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237308Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_777ff6f73730435ebacd3eb5460e849a",
+      "case_id": "eval-014",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: bounded_retry"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237316Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_4eb132a0a1d74c3b8424b47aca95ac3e",
+      "case_id": "eval-015",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: safe_area_repair"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237322Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_fb8c3954a89a4133ad3056d98b7a345d",
+      "case_id": "eval-016",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: black_frame_detection"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237329Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_bcd657d7c33246f392fdee0c19d4bcae",
+      "case_id": "eval-017",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: silence_detection"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237335Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_c378da0595664a3dac1a7af071231db3",
+      "case_id": "eval-018",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: loudness_detection"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237341Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_71cd94fb81c54e77b09ab27650b47f14",
+      "case_id": "eval-019",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: budget_guard"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237347Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_6ab3057dc5c34be589dd213fc1a8e7d6",
+      "case_id": "eval-020",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: idempotency"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237353Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_730e22edcfba492cb80a6ca230c335ff",
+      "case_id": "eval-021",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: replay"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237359Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_d6ee267c855941dda3c79a76abd490d9",
+      "case_id": "eval-022",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: trace_redaction"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237365Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_12e4291b79a44643bc80dc8f1c9ac89e",
+      "case_id": "eval-023",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: grounded_script"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237371Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_dadac68d4b4440909595234d00531962",
+      "case_id": "eval-024",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: segment_patch"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237380Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_aa178655bc77404698d689e10fc66501",
+      "case_id": "eval-025",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: bounded_repairs"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237386Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_289879b1adb645c78117118df5d20855",
+      "case_id": "eval-026",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: segment_lock"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237392Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_3e0c2dbfa1444cb4a86f69ae787642ff",
+      "case_id": "eval-027",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: confidence_visibility"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237398Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_479f875a287a4923819c0be6b4bad407",
+      "case_id": "eval-028",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: decision_rationale"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237404Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_9c150dc2fe8040f7a65cec89d0288090",
+      "case_id": "eval-029",
+      "passed": false,
+      "metrics": {
+        "deterministic": 0.0,
+        "semantic": 0.0
+      },
+      "issues": [
+        "Capability not yet demonstrated: human_gates"
+      ],
+      "baseline_id": "v0.1"
+    },
+    {
+      "schema_version": "1.0",
+      "run_id": "eval_baseline_20260829T161117_cf8b1c",
+      "created_at": "2026-08-29T16:11:17.237410Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "eval_result_id": "eval_1a78a0c8fbe94da5851b03bff0a503b7",
+      "case_id": "eval-030",
+      "passed": true,
+      "metrics": {
+        "deterministic": 1.0,
+        "semantic": 1.0
+      },
+      "issues": [],
+      "baseline_id": "v0.1"
+    }
+  ],
+  "paths": {
+    "json": "evals/reports/eval_baseline_20260829T161117_cf8b1c.json",
+    "markdown": "evals/reports/eval_baseline_20260829T161117_cf8b1c.md",
+    "html": "evals/reports/eval_baseline_20260829T161117_cf8b1c.html"
+  }
+}

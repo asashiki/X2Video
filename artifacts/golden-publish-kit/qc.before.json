@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "duration_seconds": 8.0,
+  "checks": {
+    "video_exists": true,
+    "cover_exists": true,
+    "safe_area": false,
+    "black_frames": true,
+    "silence": true,
+    "loudness": true
+  },
+  "ffmpeg_diagnostics": {
+    "black_segments": [],
+    "silence_segments": [],
+    "mean_volume_db": -50.2
+  },
+  "issues": [
+    {
+      "schema_version": "1.0",
+      "run_id": "run_a2bb7db106c24b46a9efaedecebb7981",
+      "created_at": "2026-08-29T16:11:44.021282Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "issue_id": "quality_run_a2bb7db106c24b46a9efaedecebb7981_safe_area",
+      "code": "SUBTITLE_SAFE_AREA",
+      "category": "subtitle",
+      "severity": "error",
+      "scene_id": null,
+      "timestamp_seconds": 3.2,
+      "evidence": [
+        "subtitle_bottom=1810",
+        "safe_max=1680"
+      ],
+      "description": "字幕底边越过竖屏平台安全区。",
+      "auto_fixable": true,
+      "proposed_patch": {
+        "subtitle_bottom": 1620,
+        "rerender": "affected_scene"
+      },
+      "resolved": false
+    }
+  ]
+}

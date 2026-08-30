@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "comparison_id": "compare_eval_baseline_20260829T161117_cf8b1c_to_eval_v02_20260829T161129_bedb12",
+  "baseline_id": "eval_baseline_20260829T161117_cf8b1c",
+  "new_id": "eval_v02_20260829T161129_bedb12",
+  "baseline_pass_rate": 0.06666666666666667,
+  "new_pass_rate": 1.0,
+  "pass_rate_delta": 0.9333333333333333,
+  "markdown_path": "evals/reports/compare_eval_baseline_20260829T161117_cf8b1c_to_eval_v02_20260829T161129_bedb12.md"
+}

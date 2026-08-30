@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run_a2bb7db106c24b46a9efaedecebb7981",
+  "created_at": "2026-08-29T16:11:40.313647Z",
+  "producer_version": "x2video/0.2",
+  "input_hash": "",
+  "storyboard_id": "storyboard_780d23bbac024a2caacf3ec90e7852b5",
+  "template": "news_recap",
+  "scenes": [
+    {
+      "scene_id": "scene_85c64208df7448439689ae813357b711",
+      "pick_id": "demo-001",
+      "narration_ref": "segment_11ea6bc8e841463f9d39dfc1be33d174",
+      "visual_source_ids": [
+        "evidence_demo-001"
+      ],
+      "template": "tweet_card",
+      "duration_seconds": 6.0,
+      "crop_strategy": "contain",
+      "motion": "subtle_push",
+      "overlay_text": [
+        "该团队在8月29日发布了一个紧凑型推"
+      ],
+      "safe_area_profile": "vertical_standard",
+      "transition": "cut",
+      "attribution": "source:demo-001"
+    },
+    {
+      "scene_id": "scene_c45e87a6420a4c92a1c6e5f1fa4db120",
+      "pick_id": "demo-002",
+      "narration_ref": "segment_731177ef15e84cc799cd7bd659d05d46",
+      "visual_source_ids": [
+        "evidence_demo-002"
+      ],
+      "template": "tweet_card",
+      "duration_seconds": 6.0,
+      "crop_strategy": "contain",
+      "motion": "subtle_push",
+      "overlay_text": [
+        "新功能本周开始向部分账号向部分账号逐"
+      ],
+      "safe_area_profile": "vertical_standard",
+      "transition": "cut",
+      "attribution": "source:demo-002"
+    },
+    {
+      "scene_id": "scene_31e830cc1eda4e90bd82491adc474ea3",
+      "pick_id": "demo-003",
+      "narration_ref": "segment_802c713f686646e0bff965e9889c2d92",
+      "visual_source_ids": [
+        "evidence_demo-003"
+      ],
+      "template": "tweet_card",
+      "duration_seconds": 6.0,
+      "crop_strategy": "contain",
+      "motion": "subtle_push",
+      "overlay_text": [
+        "该评测新增多语言工具调用任务；评测集"
+      ],
+      "safe_area_profile": "vertical_standard",
+      "transition": "cut",
+      "attribution": "source:demo-003"
+    }
+  ],
+  "expected_duration_seconds": 18.0
+}

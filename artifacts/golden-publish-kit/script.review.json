@@ -1,0 +1,29 @@
+{
+  "issues": [
+    {
+      "schema_version": "1.0",
+      "run_id": "run_a2bb7db106c24b46a9efaedecebb7981",
+      "created_at": "2026-08-29T16:11:40.304593Z",
+      "producer_version": "x2video/0.2",
+      "input_hash": "",
+      "issue_id": "script_issue_f900ea3a3053422a8a5c7e0078c743ad",
+      "segment_id": "segment_731177ef15e84cc799cd7bd659d05d46",
+      "category": "unsupported_claim",
+      "severity": "error",
+      "message": "Evidence 只支持“逐步向部分账号开放”，不支持“全面开放”。",
+      "patch_instruction": "仅把“全面开放”改为“向部分账号逐步开放”。",
+      "evidence_ids": [
+        "evidence_demo-002"
+      ],
+      "resolved": true
+    }
+  ],
+  "diffs": [
+    {
+      "segment_id": "segment_731177ef15e84cc799cd7bd659d05d46",
+      "before": "新功能本周开始向部分账号全面开放。",
+      "after": "新功能本周开始向部分账号向部分账号逐步开放。"
+    }
+  ],
+  "rounds": 1
+}
