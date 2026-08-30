@@ -91,29 +91,31 @@ def main() -> None:
             "settings": "/settings",
         }
         with sync_playwright() as playwright:
-            for label, viewport in (("desktop", {"width": 1440, "height": 1000}), ("mobile", {"width": 390, "height": 844})):
-                # The portable Lambda Chromium build is single-process. A fresh browser
-                # per viewport avoids a process teardown when the first context closes.
-                browser = playwright.chromium.launch(
-                    executable_path=args.chromium,
-                    headless=True,
-                    args=[
-                        "--no-sandbox",
-                        "--disable-setuid-sandbox",
-                        "--disable-dev-shm-usage",
-                        "--single-process",
-                        "--use-angle=swiftshader",
-                        "--enable-unsafe-swiftshader",
-                    ],
-                )
-                context = browser.new_context(viewport=viewport, device_scale_factor=1)
-                page = context.new_page()
-                for name, route in routes.items():
-                    page.goto(f"http://127.0.0.1:5173{route}", wait_until="networkidle")
-                    page.evaluate("document.fonts.ready")
-                    page.screenshot(path=output / f"{label}-{name}.png", full_page=False)
-                context.close()
-                browser.close()
+            for theme in ("light", "dark"):
+                for label, viewport in (("desktop", {"width": 1440, "height": 1000}), ("mobile", {"width": 390, "height": 844})):
+                    # The portable Lambda Chromium build is single-process. A fresh browser
+                    # per theme/viewport avoids a process teardown when a context closes.
+                    browser = playwright.chromium.launch(
+                        executable_path=args.chromium,
+                        headless=True,
+                        args=[
+                            "--no-sandbox",
+                            "--disable-setuid-sandbox",
+                            "--disable-dev-shm-usage",
+                            "--single-process",
+                            "--use-angle=swiftshader",
+                            "--enable-unsafe-swiftshader",
+                        ],
+                    )
+                    context = browser.new_context(viewport=viewport, device_scale_factor=1)
+                    context.add_init_script(f"localStorage.setItem('x2video-theme', '{theme}')")
+                    page = context.new_page()
+                    for name, route in routes.items():
+                        page.goto(f"http://127.0.0.1:5173{route}", wait_until="networkidle")
+                        page.evaluate("document.fonts.ready")
+                        page.screenshot(path=output / f"{theme}-{label}-{name}.png", full_page=False)
+                    context.close()
+                    browser.close()
         print(f"run_id={run_id}")
         print(f"screenshots={output}")
     finally:

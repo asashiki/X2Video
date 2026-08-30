@@ -19,7 +19,7 @@ x2video studio
 # 打开 http://127.0.0.1:8765
 ```
 
-Studio 默认只监听 `127.0.0.1`。它包含 Dashboard、Intent Composer、Agent Timeline、Curation Board、Script/Storyboard、QC Lab、Memory/Benchmarks 和 Settings/Doctor；页面读取同一 SQLite RunStore，不伪造 Agent 活动。
+Studio 默认只监听 `127.0.0.1`。它包含 Dashboard、Intent Composer、Agent Timeline、Curation Board、Script/Storyboard、QC Lab、Memory/Benchmarks 和 Settings/Doctor；页面读取同一 SQLite RunStore，不伪造 Agent 活动。界面默认使用高可读性的浅色主题，并可在顶部切换深色主题。
 
 常用控制面命令：
 
@@ -35,7 +35,7 @@ x2video eval compare BASELINE_ID NEW_ID
 
 - `artifacts/golden-publish-kit/`：真实 MP4、封面、Trace、脚本 Diff、修复前后 QC；
 - `artifacts/demo-stability.json`：10 次连续离线 Demo 的逐次结果；
-- `artifacts/ui-qa/2026-08-29/`：1440×1000 与 390×844 的真实浏览器截图；
+- `artifacts/ui-qa/2026-08-30/`：浅色/深色主题在 1440×1000 与 390×844 下的 32 张真实浏览器截图；
 - `evals/reports/`：固定 30-case 的 JSON、Markdown、HTML 与基线对比。
 
 更多说明见 [Agent 架构](./docs/architecture-agent-studio.md)、[三分钟演示](./docs/demo/three-minute-demo.md) 和 [验证报告](./docs/demo/verification-report.md)。

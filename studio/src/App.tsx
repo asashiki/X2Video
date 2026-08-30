@@ -10,7 +10,6 @@ import {
   CircleAlert,
   CircleCheck,
   Clock3,
-  Command,
   FileDiff,
   Film,
   Gauge,
@@ -18,16 +17,16 @@ import {
   Lock,
   MemoryStick,
   Menu,
+  Moon,
   OctagonX,
-  PanelLeftClose,
   Pause,
   Play,
   Plus,
   RefreshCw,
-  Search,
   Settings,
   ShieldCheck,
   Sparkles,
+  Sun,
   Unlock,
   X,
 } from "lucide-react";
@@ -57,6 +56,14 @@ function Status({ value }: { value: string }) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    window.localStorage.getItem("x2video-theme") === "dark" ? "dark" : "light",
+  );
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem("x2video-theme", theme);
+  }, [theme]);
   return (
     <div className="shell">
       <aside className={`rail ${open ? "rail--open" : ""}`}>
@@ -64,13 +71,18 @@ function Shell({ children }: { children: React.ReactNode }) {
         <nav aria-label="主要导航">
           {navItems.map(([to, label, Icon]) => <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)}><Icon size={18}/><span>{label}</span></NavLink>)}
         </nav>
-        <div className="rail__foot"><span className="connection"><i/>LOCAL CONTROL PLANE</span><small>v0.2 · Demo ready</small></div>
+        <div className="rail__foot"><span className="connection"><i/>本地服务正常</span></div>
       </aside>
       <div className="shell__body">
         <header className="topbar">
           <button className="icon-button mobile-only" aria-label="打开导航" onClick={() => setOpen(!open)}><Menu size={19}/></button>
-          <div className="command"><Search size={16}/><span>搜索 Run、Artifact 或 Evidence</span><kbd><Command size={12}/> K</kbd></div>
-          <div className="topbar__right"><span className="live-dot">LIVE</span><Link className="primary-button primary-button--small" to="/new"><Plus size={16}/>新建 Run</Link></div>
+          <div className="topbar__spacer" />
+          <div className="topbar__right">
+            <button className="theme-toggle" aria-label={`切换到${theme === "light" ? "深色" : "浅色"}模式`} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+              {theme === "light" ? <Moon size={16}/> : <Sun size={16}/>}<span>{theme === "light" ? "深色" : "浅色"}</span>
+            </button>
+            <Link className="primary-button primary-button--small" to="/new"><Plus size={16}/>新建 Run</Link>
+          </div>
         </header>
         <main>{children}</main>
       </div>
@@ -79,8 +91,8 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PageHeader({ eyebrow, title, detail, action }: { eyebrow: string; title: string; detail: string; action?: React.ReactNode }) {
-  return <div className="page-header"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{detail}</p></div>{action && <div className="page-header__actions">{action}</div>}</div>;
+function PageHeader({ title, action }: { eyebrow?: string; title: string; detail?: string; action?: React.ReactNode }) {
+  return <div className="page-header"><h1>{title}</h1>{action && <div className="page-header__actions">{action}</div>}</div>;
 }
 
 function useRuns() {
@@ -100,10 +112,10 @@ function Dashboard() {
     <PageHeader eyebrow="EDITORIAL CONTROL ROOM" title="今天的生产台" detail="先处理等待中的 Gate，再检查正在运行的内容生产任务。" action={<Link className="primary-button" to="/new"><Sparkles size={17}/>表达创作目标</Link>}/>
     {error && <div className="notice notice--error"><CircleAlert size={17}/>{error}</div>}
     <section className="attention-strip">
-      <div><span>等待决策</span><strong>{gates.length}</strong><small>Gate 需要人工确认</small></div>
-      <div><span>运行中</span><strong>{active.length}</strong><small>Worker 与实时 Trace</small></div>
-      <div><span>已完成</span><strong>{completed.length}</strong><small>可审片 Publish Kit</small></div>
-      <div><span>可靠性</span><strong>{runs.length ? Math.round(completed.length / runs.length * 100) : 100}%</strong><small>本地 Run 完成率</small></div>
+      <div><span>等待决策</span><strong>{gates.length}</strong></div>
+      <div><span>运行中</span><strong>{active.length}</strong></div>
+      <div><span>已完成</span><strong>{completed.length}</strong></div>
+      <div><span>完成率</span><strong>{runs.length ? Math.round(completed.length / runs.length * 100) : 100}%</strong></div>
     </section>
     <div className="dashboard-grid">
       <section className="work-panel work-panel--runs">
@@ -143,7 +155,7 @@ function NewRun() {
   return <div className="page composer-page">
     <PageHeader eyebrow="INTENT COMPOSER" title="告诉总编导，你想做什么" detail="自然语言目标是主输入；结构化约束用于锁定预算、风险和人工控制。"/>
     <div className="composer">
-      <section className="composer__intent"><label htmlFor="goal">创作目标</label><textarea id="goal" value={query} onChange={e => setQuery(e.target.value)} /><div className="intent-hints"><span>目标受众：普通中文用户</span><span>平台：抖音 / B站</span><span>数据：冻结 Demo Fixture</span></div></section>
+      <section className="composer__intent"><label htmlFor="goal">创作目标</label><textarea id="goal" value={query} onChange={e => setQuery(e.target.value)} /></section>
       <aside className="composer__constraints">
         <h2>运行约束</h2>
         <label>自治等级<select value={autonomy} onChange={e => setAutonomy(e.target.value)}><option value="supervised">Supervised · 每个 Gate</option><option value="assisted">Assisted · 风险时阻塞</option><option value="auto">Auto · 预算内直通</option></select></label>

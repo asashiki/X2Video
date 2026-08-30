@@ -4,14 +4,16 @@ Use this reference when establishing or changing the shell, tokens, or primary p
 
 ## Character
 
-The product is an editorial operations desk: calm, exact, information-dense, and credible. It should feel closer to a professional video editor and incident console than a marketing dashboard. Default to a dark neutral canvas with restrained cool surfaces and one warm action accent. Color communicates status; decoration does not compete with evidence.
+The product is an editorial operations desk: calm, exact, clear, and credible. It should feel closer to a professional desktop tool than a marketing dashboard. Default to a high-clarity light theme and provide an equally complete dark theme. Color communicates status; decoration does not compete with evidence.
+
+Prefer immediate comprehension over visible sophistication. Do not add an eyebrow, subtitle, helper sentence, badge, ID, or metadata row unless it changes the user's next decision. Avoid the common generated-dashboard habit of explaining every control with a second line of small text. Essential detail remains available in the relevant inspector or expanded state.
 
 ## Tokens
 
-- Canvas: near-black blue-neutral, never pure black.
-- Surface levels: three clearly separated neutral levels using lightness and 1px borders, not blur.
+- Canvas: soft neutral gray in the default light theme; near-black blue-neutral in dark mode, never pure white or pure black.
+- Surface levels: clearly separated neutral levels using lightness and 1px borders, not blur.
 - Text: high-contrast primary, muted metadata, subdued tertiary; avoid low-contrast gray-on-gray.
-- Accent: amber for selected/editable/action focus. Cyan only for live/streaming context.
+- Accent: warm amber for primary action focus. Selection uses a complete quiet surface and border, never a lone stripe on one edge or an underline.
 - Status: green success, amber waiting/warning, red error/blocker, blue running/info, gray pending/canceled.
 - Radius: 6–10px for controls and panels. Avoid fully rounded containers except compact status chips.
 - Spacing: 4px base grid; dense controls use 8/12px, panels 16/20px, route gutters 24px.
@@ -19,8 +21,8 @@ The product is an editorial operations desk: calm, exact, information-dense, and
 
 ## Shell
 
-- Left rail: product/route navigation with icons and text; collapsible at medium widths.
-- Top bar: current Run switcher, connection state, global command/search, and primary action.
+- Left rail: product/route navigation with icons and text; collapsible at medium widths. The active route is a complete, quiet filled item—no left color bar, bottom bar, or decorative marker.
+- Top bar: current Run context, theme switch and primary action. Add global search only when it is functional and materially useful; never reserve space for a decorative command box.
 - Main: route-specific work surface; avoid a generic title plus card grid on every page.
 - Inspector: contextual right pane for evidence, issue details, or Artifact metadata; collapsible and resizable where useful.
 

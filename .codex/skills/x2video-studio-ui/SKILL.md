@@ -19,6 +19,7 @@ Build a mature editorial control room, not a collection of generic dashboard car
 - Keep persistent global context visible: Run state, autonomy, budget/cost, connection mode, and the active Gate.
 - Prefer work surfaces, split panes, tables, timelines, inspectors, and inline diffs over repetitive rounded cards.
 - Use progressive disclosure. Show decision summaries, confidence, risk, evidence, and repair actions; never expose hidden reasoning.
+- Remove ornamental English kickers, redundant helper lines, repeated status prose, and metadata that does not change the next action. User-facing information must not depend on tiny 8–10px text.
 - Every control must invoke a real API operation or be visibly disabled with an honest explanation.
 - Design loading, empty, disconnected, error, waiting-human, canceled, and budget-stopped states as first-class states.
 - Preserve keyboard focus, semantic labels, reduced-motion behavior, minimum 44px touch targets on narrow layouts, and WCAG AA contrast for essential text.

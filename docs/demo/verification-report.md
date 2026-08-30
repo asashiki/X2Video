@@ -11,7 +11,7 @@ Verification date: 2026-08-29. Environment: Python 3.12.13, Node 24.19.0, FFmpeg
 | Frontend | `npm test -- --run` | 1 passed |
 | Production UI | `npm run build` | pass; React bundle and two self-hosted Chinese WOFF2 fonts |
 | Doctor | `X2VIDEO_BROWSER_EXECUTABLE=/tmp/chromium .venv/bin/x2video doctor` | required checks pass; optional Grok auth is absent |
-| UI E2E | `.venv/bin/python scripts/ui_qa.py --chromium /tmp/chromium` | 16 screenshots across eight routes and two viewports |
+| UI E2E | `.venv/bin/python scripts/ui_qa.py --chromium /tmp/chromium` | 32 screenshots across two themes, eight routes and two viewports |
 | Demo stability | `.venv/bin/python scripts/demo_smoke.py --runs 10` | 10/10 complete in 52.368 s; every Run has 20 events, one repair and passing QC |
 | Eval | `x2video eval run --profile v0.2` | 30/30 fixed cases pass |
 | Baseline compare | `x2video eval compare …` | v0.1 capability baseline 6.7% → v0.2 100%, +93.3 points |
@@ -22,7 +22,7 @@ The Eval percentage is a deterministic feature-suite result, not a claim about o
 
 - `artifacts/golden-publish-kit/` — real video, cover, Script Critic diff, Storyboard, Trace and QC before/after.
 - `artifacts/demo-stability.json` — per-iteration IDs, timing, event count, media size and repair result.
-- `artifacts/ui-qa/2026-08-29/` — populated route screenshots at desktop and mobile sizes.
+- `artifacts/ui-qa/2026-08-30/` — light/dark populated route screenshots at desktop and mobile sizes.
 - `evals/reports/` — versioned JSON, Markdown and HTML reports plus comparison.
 
 ## Honest external gaps

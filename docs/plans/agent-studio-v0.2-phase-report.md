@@ -70,13 +70,13 @@ Each phase below records implementation, decisions, files/migrations, commands, 
 ## Phase 5 — Agent Studio
 
 - Completed: FastAPI, SSE, independent Worker, production React/Vite/TypeScript app, all eight routes, real controls, packaged static build and real-browser QA at desktop/mobile sizes.
-- Decision: a custom dark editorial control-room visual system replaces generic component-library cards; self-hosted CJK fonts make rendering deterministic.
+- Decision: a custom, light-by-default editorial workspace replaces generic component-library cards; dark mode remains available. The hierarchy removes ornamental microcopy and stripe/underline selection patterns, while self-hosted CJK fonts make rendering deterministic.
 - Main files: `x2video/api/`, `x2video/application.py`, `studio/`, `scripts/ui_qa.py`, `tests/test_api.py`.
 - Migration: `is_paused` v2 column supports visible pause/resume control.
 - Commands: `npm test -- --run`, `npm run build`, API tests and `scripts/ui_qa.py`.
 - Result: Studio creates and observes complete Runs, executes Gate/curation/script/memory actions, plays real media and supports client-side routes from the packaged server.
 - Artifact: production bundle under `x2video/api/static/`.
-- Screenshot: 16 route/viewport captures plus contact sheet under `artifacts/ui-qa/2026-08-29/`.
+- Screenshot: 32 theme/route/viewport captures plus four contact sheets under `artifacts/ui-qa/2026-08-30/`.
 - Risk: native browser prompts are used for the compact one-Segment replacement interaction; a richer diff editor is future UX refinement.
 - Next: add approved Memory and fixed release evaluation.
 

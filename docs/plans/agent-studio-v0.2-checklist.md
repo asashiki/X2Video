@@ -63,7 +63,7 @@ This is the reviewable implementation ledger. A checked item requires a test, Ar
 - [x] Memory/Benchmarks and Settings/Doctor.
 - [x] Apply the `x2video-studio-ui` Skill and its visual system.
 - [x] Component tests, production build, and real UI E2E.
-- [x] Screenshot QA at 1440x1000 and 390x844 for eight populated routes; bundled CJK fonts and player cover were iterated from observed defects.
+- [x] Screenshot QA for light/dark themes at 1440x1000 and 390x844 across eight populated routes; bundled CJK fonts, readable metadata and player cover were iterated from observed defects.
 
 ## Phase 6 — Memory, Distillation, Eval
 
@@ -83,5 +83,5 @@ This is the reviewable implementation ledger. A checked item requires a test, Ar
 - [ ] Verify one live-source, real-provider Publish Kit separately; the committed Golden Kit is explicitly Demo Mode.
 - [x] Three-minute demo script and architecture diagram.
 - [x] README, install, Doctor, troubleshooting, migration and rollback docs.
-- [ ] `pytest -q`, `ruff check .`, CLI help/Doctor, UI tests/build/E2E, screenshots, and artifacts recorded.
+- [x] `pytest -q`, `ruff check .`, CLI help/Doctor, UI tests/build/E2E, screenshots, and artifacts recorded.
 - [x] Small reviewable commits; draft PR is the final handoff action and will not be merged automatically.
