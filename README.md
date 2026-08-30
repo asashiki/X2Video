@@ -1,8 +1,17 @@
 # X2Video Agent Studio
 
-把一个自然语言内容目标变成可追溯、可审查、可修复的竖屏视频 Publish Kit。v0.2 在保留 v0.1 CLI 和确定性视频管线的基础上，加入有边界 Content Director、EvidencePack、编辑组合、脚本 Critic、成片 QC、局部修复和本地 Agent Studio。
+**把一句“帮我做今天的 AI 新闻”，变成可审查、可局部重做的竖屏视频成品包。**
 
-**为什么做这个**：外网（尤其 X）上的优质热点内容与中文短视频平台之间存在信息差。这个项目把"发现热帖 → 翻译 → 解说 → 成片"的搬运链路自动化，人只保留两个把关点：选题和审片。
+它负责找素材、筛选、翻译、写稿、配音、合成和成片质检；人只保留两个真正重要的决定：**选什么**，以及**是否发布**。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="artifacts/ui-qa/2026-08-30/dark-desktop-dashboard.png">
+  <img src="artifacts/ui-qa/2026-08-30/light-desktop-dashboard.png" alt="X2Video Agent Studio 总览页，显示最近的视频生产任务和待处理审核" width="100%">
+</picture>
+
+一句目标 → 候选素材 → 人工选题 → 脚本与分镜 → MP4、封面和质检报告。
+
+[查看完整界面图集](artifacts/ui-qa/2026-08-30/light-desktop-contact-sheet.png) · [三分钟演示](./docs/demo/three-minute-demo.md) · [验证报告](./docs/demo/verification-report.md)
 
 ## 三分钟跑通离线 Demo
 
@@ -38,7 +47,7 @@ x2video eval compare BASELINE_ID NEW_ID
 - `artifacts/ui-qa/2026-08-30/`：浅色/深色主题在 1440×1000 与 390×844 下的 32 张真实浏览器截图；
 - `evals/reports/`：固定 30-case 的 JSON、Markdown、HTML 与基线对比。
 
-更多说明见 [Agent 架构](./docs/architecture-agent-studio.md)、[三分钟演示](./docs/demo/three-minute-demo.md) 和 [验证报告](./docs/demo/verification-report.md)。
+更多说明见 [Agent 架构](./docs/architecture-agent-studio.md)。
 
 ## 项目状态
 
