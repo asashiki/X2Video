@@ -13,10 +13,13 @@ from x2video.pipeline.card import (
     clip_display_text,
     is_image_url,
 )
+from x2video.pipeline.curate import is_newsworthy
+from x2video.pipeline.fetch import choose_fetch_pool
 from x2video.pipeline.hard_filter import apply_hard_filter
 from x2video.pipeline.ledger import Ledger
 from x2video.pipeline.models import DigestScript, Pick, ScriptSegment
-from x2video.pipeline.render import build_ass, build_ass_cues, format_ass_time
+from x2video.pipeline.render import build_ass, build_ass_cues, format_ass_time, wrap_ass_text
+from x2video.pipeline.script import apply_script_dates
 from x2video.pipeline.workdir import resolve_run_dir
 from x2video.source.models import CandidateTweet
 from x2video.util import (
@@ -24,9 +27,25 @@ from x2video.util import (
     format_count,
     format_md_date,
     parse_json_payload,
+    picks_for_duration,
     punchline,
+    search_terms,
     split_subtitles,
+    strip_date_lead,
 )
+
+
+def test_fetch_pool_reuses_unpicked_when_all_seen(tmp_path: Path) -> None:
+    ledger = Ledger.load(tmp_path)
+    a = CandidateTweet(id="1", text="new", likes=200, retweets=20)
+    b = CandidateTweet(id="2", text="old seen", likes=200, retweets=20)
+    c = CandidateTweet(id="3", text="already a pick", likes=200, retweets=20)
+    ledger.mark_seen(["2", "3"])
+    ledger.mark_picks(["3"])
+    pool = choose_fetch_pool([a, b, c], ledger)
+    assert [x.id for x in pool] == ["1"]
+    leftover = choose_fetch_pool([b, c], ledger)
+    assert [x.id for x in leftover] == ["2"]
 
 
 def test_ledger_seen_and_picks(tmp_path: Path) -> None:
@@ -85,6 +104,45 @@ def test_ensure_date_lead_prefixes_once() -> None:
     assert ensure_date_lead("8月27日，已经有了。", "8月27日") == "8月27日，已经有了。"
 
 
+def test_strip_date_lead() -> None:
+    assert strip_date_lead("8月30日，DeepMind发了论文。") == "DeepMind发了论文。"
+    assert strip_date_lead("今天圈里都在转。") == "圈里都在转。"
+
+
+def test_same_day_script_does_not_chant_the_date() -> None:
+    script = DigestScript(
+        hook="8月30日圈里这几条都在转。",
+        segments=[
+            ScriptSegment(pick_id="a", narration="8月30日，DeepMind发了论文。"),
+            ScriptSegment(pick_id="b", narration="特斯拉推了新模型。"),
+        ],
+    )
+    out = apply_script_dates(script, {"a": "8月30日", "b": "8月30日"})
+    assert "8月30日" not in out.hook
+    assert "8月30日" not in out.segments[0].narration
+    assert out.segments[0].narration.startswith("DeepMind")
+
+
+def test_mixed_day_script_dates_each_item() -> None:
+    script = DigestScript(
+        hook="8月30日圈里这几条都在转。",
+        segments=[
+            ScriptSegment(pick_id="a", narration="DeepMind发了论文。"),
+            ScriptSegment(pick_id="b", narration="特斯拉推了新模型。"),
+        ],
+    )
+    out = apply_script_dates(script, {"a": "8月29日", "b": "8月30日"})
+    assert "8月" not in out.hook
+    assert out.segments[0].narration.startswith("8月29日")
+    assert out.segments[1].narration.startswith("8月30日")
+
+
+def test_fluff_is_not_newsworthy() -> None:
+    assert not is_newsworthy("Tesla AI makes life better")
+    assert not is_newsworthy("Hey @grok is this true?")
+    assert is_newsworthy("DeepMind released a new paper on process advantage verifiers today.")
+
+
 def test_resolve_run_dir(tmp_path: Path) -> None:
     path = resolve_run_dir(tmp_path, "2026-08-27")
     assert path == tmp_path / "2026-08-27"
@@ -116,7 +174,14 @@ def test_parse_json_payload_fenced() -> None:
 def test_split_subtitles_breaks_on_punctuation() -> None:
     lines = split_subtitles("今天有大新闻。模型能在本地跑了！你觉得呢")
     assert any("大新闻" in line for line in lines)
-    assert all(len(line) <= 22 for line in lines)
+    assert len(lines) >= 2
+
+
+def test_split_subtitles_does_not_chop_a_word() -> None:
+    text = "Google DeepMind新论文直接把LLM推理验证器打分方式推翻了。"
+    lines = split_subtitles(text)
+    assert lines == [text]
+    assert "验证器" in lines[0]
 
 
 def test_split_subtitles_does_not_leave_orphan_period() -> None:
@@ -124,6 +189,7 @@ def test_split_subtitles_does_not_leave_orphan_period() -> None:
     lines = split_subtitles(text)
     assert all(line.strip() not in {"。", "！", "？"} for line in lines)
     assert any("推翻了" in line for line in lines)
+    assert all("验证器" in line or "代替" in line for line in lines)
 
 
 def test_format_count() -> None:
@@ -136,7 +202,6 @@ def test_opener_html_has_hook() -> None:
     doc = build_opener_html("圈里这几条都在转", count=5, date_label="8月27日")
     assert "圈里这几条都在转" in doc
     assert "5 条热帖" in doc
-    assert "今日外网" in doc
     assert "8月27日" in doc
 
 
@@ -200,3 +265,21 @@ def test_ass_cues_use_exact_times() -> None:
     assert "先看这条" in ass
     assert format_ass_time(1.2) in ass
     assert format_ass_time(2.5) in ass
+
+
+def test_ass_wraps_long_chinese_inside_frame() -> None:
+    line = "谷歌DeepMind发了论文，推理验证器换了打分方式，本地也能跑了。"
+    wrapped = wrap_ass_text(line)
+    assert r"\N" in wrapped
+    assert all(len(part) <= 16 for part in wrapped.split(r"\N"))
+    ass = build_ass_cues([(line, 0.0, 2.0)])
+    assert r"\N" in ass
+
+
+def test_search_terms_and_duration_picks() -> None:
+    terms = search_terms("帮我做一条机器人具身智能速览", ["AI", "LLM"])
+    assert any("机器人" in item for item in terms)
+    assert any("具身" in item for item in terms)
+    assert "AI" in terms
+    assert picks_for_duration(60) == 4
+    assert picks_for_duration(90) >= 5

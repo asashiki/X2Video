@@ -15,6 +15,16 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from x2video.application import ApplicationService
+from x2video.auth.oauth import get_status
+from x2video.config.loader import load_config
+from x2video.util import discover_browser_executable
+
+
+def _studio_config():
+    try:
+        return load_config()
+    except Exception:
+        return None
 
 
 class CreateRunRequest(BaseModel):
@@ -22,6 +32,7 @@ class CreateRunRequest(BaseModel):
     autonomy: str = "assisted"
     target_duration_seconds: int = 60
     preferred_format: str | None = None
+    mode: str | None = None
 
 
 class StartRequest(BaseModel):
@@ -44,34 +55,38 @@ class MemoryStatusRequest(BaseModel):
     status: str
 
 
-def create_app(*, work_dir: str | None = None, db_path: str | None = None) -> FastAPI:
+def create_app(
+    *,
+    work_dir: str | None = None,
+    db_path: str | None = None,
+    config=None,
+) -> FastAPI:
     resolved_work = work_dir or os.environ.get("X2VIDEO_WORK_DIR", "work")
-    service = ApplicationService(work_dir=resolved_work, db_path=db_path)
+    service = ApplicationService(work_dir=resolved_work, db_path=db_path, config=config)
     app = FastAPI(title="X2Video Agent Studio API", version="0.2.0")
     app.state.service = service
 
     @app.get("/api/health")
     def health() -> dict[str, Any]:
-        browser_path = os.environ.get("X2VIDEO_BROWSER_EXECUTABLE") or next(
-            (
-                path
-                for name in ("chromium", "chromium-browser", "google-chrome")
-                if (path := shutil.which(name))
-            ),
-            None,
-        )
+        browser_path = discover_browser_executable()
+        auth = get_status()
+        live_ready = service.live_ready()
         checks = {
             "sqlite": Path(service.db_path).exists(),
             "ffmpeg": bool(shutil.which("ffmpeg") and shutil.which("ffprobe")),
-            "browser": bool(browser_path and Path(browser_path).exists()),
+            "browser": bool(browser_path and browser_path.exists()),
             "studio": (Path(__file__).resolve().parent / "static" / "index.html").exists(),
+            "source": live_ready,
         }
         return {
-            "ok": all(checks.values()),
+            "ok": all(value for key, value in checks.items() if key != "source"),
             "version": "0.2.0",
-            "mode": "local",
+            "mode": "live" if live_ready else "demo",
             "database": str(service.db_path),
             "checks": checks,
+            "live_ready": live_ready,
+            "source_provider": getattr(getattr(service.config, "source", None), "provider", None),
+            "auth_logged_in": bool(auth.get("logged_in")),
         }
 
     @app.get("/api/runs")
@@ -80,7 +95,10 @@ def create_app(*, work_dir: str | None = None, db_path: str | None = None) -> Fa
 
     @app.post("/api/runs", status_code=201)
     def create_run(request: CreateRunRequest) -> dict[str, Any]:
-        return service.create_run(**request.model_dump())
+        try:
+            return service.create_run(**request.model_dump())
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @app.get("/api/runs/{run_id}")
     def get_run(run_id: str) -> dict[str, Any]:
@@ -181,4 +199,4 @@ def create_app(*, work_dir: str | None = None, db_path: str | None = None) -> Fa
     return app
 
 
-app = create_app()
+app = create_app(config=_studio_config())

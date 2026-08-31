@@ -10,7 +10,13 @@ from x2video.config.schema import X2VideoConfig
 from x2video.pipeline.io import load_picks
 from x2video.pipeline.models import Pick
 from x2video.pipeline.workdir import resolve_run_dir
-from x2video.util import format_count, format_md_date, format_tweet_time, punchline
+from x2video.util import (
+    format_count,
+    format_md_date,
+    format_tweet_time,
+    is_same_day_digest,
+    punchline,
+)
 
 _TEMPLATE_PATH = Path(__file__).with_name("card_template.html")
 _OPENER_PATH = Path(__file__).with_name("opener_template.html")
@@ -83,6 +89,7 @@ def build_card_html(
     *,
     index: int | None = None,
     total: int | None = None,
+    show_date: bool = True,
 ) -> str:
     template = _TEMPLATE_PATH.read_text(encoding="utf-8")
     images = [u for u in pick.media_urls if is_image_url(u)]
@@ -113,7 +120,7 @@ def build_card_html(
     mapping = {
         "{{BG_STYLE}}": bg_style,
         "{{INDEX}}": index_label,
-        "{{DATE}}": html.escape(format_md_date(pick.created_at)),
+        "{{DATE}}": html.escape(format_md_date(pick.created_at) if show_date else ""),
         "{{SHORT_CLASS}}": short_class,
         "{{AUTHOR_NAME}}": html.escape(pick.author_name or pick.author_username or "Unknown"),
         "{{HANDLE}}": html.escape(pick.author_username or ""),
@@ -245,10 +252,11 @@ def run_card(
     dest.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     total = len(picks)
+    show_date = not is_same_day_digest(picks)
     for i, pick in enumerate(picks, start=1):
         path = dest / f"card_{pick.id}.png"
         html_path = dest / f"card_{pick.id}.html"
-        doc = build_card_html(pick, index=i, total=total)
+        doc = build_card_html(pick, index=i, total=total, show_date=show_date)
         html_path.write_text(doc, encoding="utf-8")
         screenshot_html(doc, path)
         written.append(path)

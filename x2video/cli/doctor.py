@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import os
 import shutil
-from pathlib import Path
 
 import typer
 
 from x2video.auth.oauth import get_status
 from x2video.config.loader import load_config
+from x2video.util import discover_browser_executable
 
 app = typer.Typer(help="Check local setup (auth, ffmpeg, Playwright, config)")
 
@@ -55,22 +54,11 @@ def doctor(
         _bad("ffmpeg", "ffmpeg/ffprobe not on PATH")
         failed = True
 
-    try:
-        configured_executable = os.environ.get("X2VIDEO_BROWSER_EXECUTABLE")
-        if configured_executable:
-            exe = Path(configured_executable)
-        else:
-            from playwright.sync_api import sync_playwright
-
-            with sync_playwright() as pw:
-                exe = Path(pw.chromium.executable_path)
-        if exe.exists():
-            _ok("playwright", str(exe))
-        else:
-            _bad("playwright", "chromium missing — run `playwright install chromium`")
-            failed = True
-    except Exception as exc:
-        _bad("playwright", f"{exc} — pip install playwright && playwright install chromium")
+    exe = discover_browser_executable()
+    if exe is not None:
+        _ok("playwright", str(exe))
+    else:
+        _bad("playwright", "chromium missing — run `playwright install chromium`")
         failed = True
 
     try:

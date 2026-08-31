@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -321,14 +322,14 @@ class ScriptReviewTool(AgentTool):
                 category="unsupported_claim",
                 severity="error",
                 message="Evidence 只支持“逐步向部分账号开放”，不支持“全面开放”。",
-                patch_instruction="仅把“全面开放”改为“向部分账号逐步开放”。",
+                patch_instruction="仅把“全面开放”改回“逐步开放”。",
                 evidence_ids=segment.evidence_ids,
             )
             self.store.add_script_issue(issue)
             issues.append(issue)
             if not segment.locked:
                 before = segment.narration
-                segment.narration = segment.narration.replace("全面开放", "向部分账号逐步开放")
+                segment.narration = segment.narration.replace("全面开放", "逐步开放")
                 segment.revision += 1
                 issue.resolved = True
                 self.store.add_script_issue(issue)
@@ -645,14 +646,56 @@ def _probe_media_checks(path: Path) -> dict[str, Any]:
     }
 
 
+def _ffmpeg_fontfile(path: Path) -> str:
+    """Escape a local TTF path for FFmpeg drawtext (Windows drive letters included)."""
+    posix = path.resolve().as_posix().replace(":", r"\:")
+    return f"'{posix}'"
+
+
+def _demo_font_candidates() -> list[tuple[Path, Path]]:
+    windows_fonts = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"
+    return [
+        (
+            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+        ),
+        (
+            Path("/usr/share/fonts/TTF/DejaVuSans.ttf"),
+            Path("/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"),
+        ),
+        (windows_fonts / "arial.ttf", windows_fonts / "arialbd.ttf"),
+        (windows_fonts / "segoeui.ttf", windows_fonts / "segoeuib.ttf"),
+        (
+            Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+            Path("/System/Library/Fonts/Supplemental/Arial Bold.ttf"),
+        ),
+        (Path("/Library/Fonts/Arial.ttf"), Path("/Library/Fonts/Arial Bold.ttf")),
+    ]
+
+
+def _demo_fonts() -> tuple[str, str]:
+    configured_regular = os.environ.get("X2VIDEO_DEMO_FONT")
+    configured_bold = os.environ.get("X2VIDEO_DEMO_FONT_BOLD")
+    pairs: list[tuple[Path, Path]] = []
+    if configured_regular:
+        regular = Path(configured_regular)
+        bold = Path(configured_bold) if configured_bold else regular
+        pairs.append((regular, bold))
+    pairs.extend(_demo_font_candidates())
+    for regular, bold in pairs:
+        if regular.exists() and bold.exists():
+            return _ffmpeg_fontfile(regular), _ffmpeg_fontfile(bold)
+    raise RuntimeError(
+        "Demo Mode needs a TrueType font. Install DejaVu Sans, or set "
+        "X2VIDEO_DEMO_FONT to an existing .ttf path."
+    )
+
+
 def _render_demo_media(video: Path, cover: Path, *, repaired: bool) -> None:
     if shutil.which("ffmpeg") is None:
         raise RuntimeError("ffmpeg is required for Demo Mode production")
     color = "0x0b1726" if repaired else "0x121a2a"
-    regular_font = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    bold_font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    if not Path(regular_font).exists() or not Path(bold_font).exists():
-        raise RuntimeError("Demo Mode requires the bundled DejaVu Sans system font")
+    regular_font, bold_font = _demo_fonts()
     subtitle_y = 1620 if repaired else 1775
     common = [
         "drawbox=x=0:y=0:w=1080:h=16:color=0xf1ae52:t=fill",

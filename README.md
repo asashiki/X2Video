@@ -16,10 +16,11 @@ pip install -e ".[dev]"
 x2video doctor
 x2video agent run --goal "做一条 60 秒以内的今日 AI 新闻，避免重复，优先可信信息" --autonomy auto
 x2video studio
-# 打开 http://127.0.0.1:8765
+# 打开终端打印的地址，默认 http://127.0.0.1:8765
+# Windows 上 8765 可能被系统保留，命令会自动改用 8877 等可用端口
 ```
 
-Studio 默认只监听 `127.0.0.1`。它包含 Dashboard、Intent Composer、Agent Timeline、Curation Board、Script/Storyboard、QC Lab、Memory/Benchmarks 和 Settings/Doctor；页面读取同一 SQLite RunStore，不伪造 Agent 活动。界面默认使用高可读性的浅色主题，并可在顶部切换深色主题。
+Studio 默认只监听 `127.0.0.1`。已登录 SuperGrok 时，网页「生成并运行」走原来的 `fetch → curate → card → script → render` 速览管线（真实 X 热帖 + 中文口播成片）。未登录时才使用仓库内冻结 Demo 数据。
 
 常用控制面命令：
 

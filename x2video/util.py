@@ -3,11 +3,59 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import shutil
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 CST = timezone(timedelta(hours=8))
+
+
+def discover_browser_executable() -> Path | None:
+    """Locate Chromium without requiring it to be on PATH."""
+    configured = os.environ.get("X2VIDEO_BROWSER_EXECUTABLE")
+    if configured:
+        path = Path(configured)
+        return path if path.exists() else None
+    for name in ("chromium", "chromium-browser", "google-chrome", "chrome", "msedge"):
+        found = shutil.which(name)
+        if found and Path(found).exists():
+            return Path(found)
+    patterns = (
+        "chromium-*/chrome-win64/chrome.exe",
+        "chromium-*/chrome-linux/chrome",
+        "chromium-*/chrome-linux64/chrome",
+        "chromium-*/chrome-mac/Chromium",
+        "chromium-*/chrome-mac-arm64/Chromium",
+    )
+    roots: list[Path] = []
+    local_app = os.environ.get("LOCALAPPDATA")
+    if local_app:
+        roots.append(Path(local_app) / "ms-playwright")
+    roots.extend(
+        [
+            Path.home() / "AppData" / "Local" / "ms-playwright",
+            Path.home() / ".cache" / "ms-playwright",
+            Path.home() / "Library" / "Caches" / "ms-playwright",
+        ]
+    )
+    for root in roots:
+        if not root.exists():
+            continue
+        for pattern in patterns:
+            matches = sorted(root.glob(pattern))
+            if matches:
+                return matches[-1]
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as playwright:
+            exe = Path(playwright.chromium.executable_path)
+        return exe if exe.exists() else None
+    except Exception:
+        return None
 
 
 def strip_json_fence(text: str) -> str:
@@ -36,6 +84,60 @@ def parse_json_payload(text: str) -> Any:
         if end <= start:
             raise
         return json.loads(cleaned[start : end + 1])
+
+
+_GOAL_STOP = {
+    "帮我",
+    "做一条",
+    "做成",
+    "一条",
+    "今日",
+    "今天",
+    "中文",
+    "口播",
+    "热帖",
+    "热点",
+    "速览",
+    "视频",
+    "外文",
+    "抓取",
+    "最近",
+}
+
+
+def search_terms(query: str, fallback: list[str] | None = None) -> list[str]:
+    """Turn the Studio goal into fetch keywords, keeping config terms as backup."""
+    terms: list[str] = []
+    seen: set[str] = set()
+
+    def add(term: str) -> None:
+        value = (term or "").strip()
+        key = value.lower()
+        if len(value) < 2 or key in seen or value in _GOAL_STOP:
+            return
+        seen.add(key)
+        terms.append(value)
+
+    text = (query or "").strip()
+    for match in re.findall(r"[“\"']([^”\"']+)[”\"']", text):
+        add(match)
+    cleaned = text
+    for stop in sorted(_GOAL_STOP, key=len, reverse=True):
+        cleaned = cleaned.replace(stop, " ")
+    for match in re.findall(r"[A-Za-z][A-Za-z0-9+\-]{1,20}", cleaned or text):
+        add(match)
+    for match in re.findall(r"[\u4e00-\u9fff]{2,8}", cleaned):
+        add(match)
+    for item in fallback or []:
+        add(item)
+    return terms[:12] or list(fallback or [])
+
+
+def picks_for_duration(seconds: int, configured: int = 6) -> int:
+    """How many digest items to aim for given a target length."""
+    target = max(20, int(seconds or 60))
+    needed = max(2, round(target / 16))
+    return max(2, min(int(configured or 6), needed))
 
 
 def format_count(n: int) -> str:
@@ -116,6 +218,16 @@ def punchline(text: str, *, limit: int = 14) -> str:
     return (chosen[:limit].strip() or "外网热帖")
 
 
+_DATE_LEAD_RE = re.compile(
+    r"^(今天|昨天|前天|\d{1,2}月\d{1,2}[日号])[，,、]?\s*"
+)
+
+
+def strip_date_lead(narration: str) -> str:
+    """Drop a leading 几月几号 / 今天 so the date is not chanted twice."""
+    return _DATE_LEAD_RE.sub("", (narration or "").strip(), count=1).strip()
+
+
 def ensure_date_lead(narration: str, date_label: str) -> str:
     """Guarantee a news-desk date at the start of a spoken line."""
     text = (narration or "").strip()
@@ -126,60 +238,54 @@ def ensure_date_lead(narration: str, date_label: str) -> str:
         return text
     if label in text[:18]:
         return text
-    if re.match(r"^(今天|昨天|前天|\d{1,2}月\d{1,2}日)", text):
+    if _DATE_LEAD_RE.match(text):
         return text
     return f"{label}，{text}"
+
+
+def is_same_day_digest(picks: list[Any]) -> bool:
+    """True when every Pick falls on the same China-local calendar day."""
+    labels = {
+        format_md_date(getattr(pick, "created_at", "") or "")
+        for pick in picks
+        if getattr(pick, "created_at", None)
+    }
+    return len(labels) <= 1
 
 
 _PUNCT_ONLY = re.compile(r"^[。！？!?；;，,、.\s]+$")
 
 
-def split_subtitles(text: str, *, max_len: int = 18) -> list[str]:
-    """Split narration into subtitle lines by punctuation, then length.
+def split_subtitles(text: str, *, max_len: int = 48) -> list[str]:
+    """Split narration into spoken units. Keep sentences intact.
 
-    These lines are both what TTS speaks (one clip per line) and what
-    appears on screen, so they must be the same string the voice reads.
+    Each returned line is sent to TTS as one clip. Do not slice on a
+    character budget — that pauses mid-word. Break on sentence
+    punctuation, and only on a comma if a sentence is unusually long.
     """
     text = re.sub(r"\s+", " ", text).strip()
     if not text:
         return []
-    parts = re.split(r"(?<=[。！？!?；;])", text)
+    sentences = [part.strip() for part in re.split(r"(?<=[。！？!?])", text) if part.strip()]
     lines: list[str] = []
-    for part in parts:
-        chunk = part.strip()
-        if not chunk:
+    for sentence in sentences:
+        if _PUNCT_ONLY.match(sentence):
+            if lines:
+                lines[-1] += sentence.strip()
             continue
-        if len(chunk) > max_len:
-            clauses = re.split(r"(?<=[，,、])", chunk)
-            buf = ""
-            for clause in clauses:
-                piece = clause.strip()
-                if not piece:
-                    continue
-                if buf and len(buf) + len(piece) > max_len:
-                    lines.append(buf)
-                    buf = piece
-                else:
-                    buf += piece
-            if buf:
-                chunk = buf
-            else:
+        if len(sentence) <= max_len:
+            lines.append(sentence)
+            continue
+        buf = ""
+        for clause in re.split(r"(?<=[，,、；;])", sentence):
+            piece = clause.strip()
+            if not piece:
                 continue
-        while len(chunk) > max_len:
-            rest = chunk[max_len:]
-            if _PUNCT_ONLY.match(rest):
-                lines.append(chunk)
-                chunk = ""
-                break
-            lines.append(chunk[:max_len])
-            chunk = rest
-        if chunk:
-            lines.append(chunk)
-    cleaned: list[str] = []
-    for line in lines:
-        if _PUNCT_ONLY.match(line):
-            if cleaned:
-                cleaned[-1] += line.strip()
-            continue
-        cleaned.append(line)
-    return cleaned or [text]
+            if buf and len(buf) + len(piece) > max_len:
+                lines.append(buf)
+                buf = piece
+            else:
+                buf += piece
+        if buf:
+            lines.append(buf)
+    return lines or [text]

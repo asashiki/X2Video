@@ -32,7 +32,7 @@ async def test_legacy_stage_is_traceable_without_changing_its_output(tmp_path: P
         )
     )
 
-    assert result.summary == "Legacy fetch completed"
+    assert "Candidate" in result.summary
     assert result.artifacts[0].path == str(output)
     assert result.payload["date"] == "2026-08-29"
 
@@ -47,3 +47,22 @@ def test_compatibility_plan_preserves_stage_order() -> None:
         "legacy.script",
         "legacy.render",
     ]
+
+
+def test_application_live_mode_uses_compatibility_plan(tmp_path: Path) -> None:
+    from x2video.application import ApplicationService
+
+    service = ApplicationService(work_dir=str(tmp_path), config=load_config("x2video.example.toml"))
+    snapshot = service.create_run(query="今日 AI 新闻", autonomy="auto", mode="live")
+    tools = [task["tool_name"] for task in snapshot["plan"]["tasks"]]
+    assert tools[0] == "legacy.fetch"
+    assert snapshot["run"]["mode"] == "live"
+
+
+def test_application_defaults_to_demo_without_live_source(tmp_path: Path) -> None:
+    from x2video.application import ApplicationService
+
+    service = ApplicationService(work_dir=str(tmp_path))
+    snapshot = service.create_run(query="今日 AI 新闻", autonomy="auto")
+    assert snapshot["run"]["mode"] == "demo"
+    assert snapshot["plan"]["tasks"][0]["tool_name"] == "content.discover"

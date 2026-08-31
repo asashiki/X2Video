@@ -11,6 +11,7 @@ def test_api_run_gate_and_snapshot(tmp_path: Path) -> None:
 
     health = client.get("/api/health")
     assert health.status_code == 200
+    assert health.json()["checks"]["ffmpeg"] is True
     created = client.post(
         "/api/runs",
         json={"query": "今日 AI 圈三件事", "autonomy": "assisted"},

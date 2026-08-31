@@ -13,7 +13,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => request<{ ok: boolean; version: string; mode: string; checks: Record<string, boolean> }>("/api/health"),
+  health: () => request<{
+    ok: boolean;
+    version: string;
+    mode: string;
+    live_ready?: boolean;
+    source_provider?: string | null;
+    auth_logged_in?: boolean;
+    checks: Record<string, boolean>;
+  }>("/api/health"),
   runs: () => request<{ items: RunRow[] }>("/api/runs"),
   run: (id: string) => request<Snapshot>(`/api/runs/${id}`),
   createRun: (payload: Record<string, unknown>) =>

@@ -9,8 +9,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from x2video.agent.planner import build_plan
+from x2video.agent.planner import build_compatibility_plan, build_plan
 from x2video.agent.runtime import AgentRuntime
+from x2video.auth.oauth import get_status
+from x2video.config.schema import X2VideoConfig
 from x2video.domain.models import (
     ContentGoal,
     EditorialDecision,
@@ -23,17 +25,41 @@ from x2video.domain.models import (
 )
 from x2video.storage.run_store import RunStore
 from x2video.tools.content import register_content_tools
+from x2video.tools.legacy_pipeline import register_legacy_tools
 from x2video.tools.registry import ToolRegistry
 
 
 class ApplicationService:
-    def __init__(self, *, work_dir: str = "work", db_path: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        work_dir: str = "work",
+        db_path: str | None = None,
+        config: X2VideoConfig | None = None,
+    ) -> None:
         self.work_dir = str(Path(work_dir))
         self.db_path = db_path or str(Path(work_dir) / "x2video-agent.db")
+        self.config = config
         self.store = RunStore(self.db_path)
         registry = ToolRegistry()
         register_content_tools(registry, self.store)
+        if config is not None:
+            register_legacy_tools(registry, config, self.store)
         self.runtime = AgentRuntime(self.store, registry, work_dir=self.work_dir)
+
+    def live_ready(self) -> bool:
+        if self.config is None:
+            return False
+        if self.config.source.provider == "grok":
+            return bool(get_status().get("logged_in"))
+        return True
+
+    def resolve_mode(self, requested: str | None = None) -> str:
+        if requested in {"live", "demo"}:
+            if requested == "live" and self.config is None:
+                raise ValueError("Live mode needs a loaded x2video.toml")
+            return requested
+        return "live" if self.live_ready() else "demo"
 
     def create_run(
         self,
@@ -42,9 +68,11 @@ class ApplicationService:
         autonomy: str = "assisted",
         target_duration_seconds: int = 60,
         preferred_format: str | None = None,
+        mode: str | None = None,
     ) -> dict[str, Any]:
         run_id = new_id("run")
         approved_memories = self.store.list_memories(status="approved")
+        resolved_mode = self.resolve_mode(mode)
         goal = ContentGoal(
             run_id=run_id,
             query=query,
@@ -53,9 +81,16 @@ class ApplicationService:
             preferred_format=preferred_format,
             memory_context=[item["content"] for item in approved_memories[:10]],
         )
-        plan = build_plan(goal)
+        if resolved_mode == "live":
+            goal.budget.max_runtime_seconds = max(goal.budget.max_runtime_seconds, 1800)
+            plan = build_compatibility_plan(goal)
+        else:
+            plan = build_plan(goal)
         self.runtime.create(goal, plan)
-        return self.get_run(run_id) or {}
+        snapshot = self.get_run(run_id) or {}
+        if snapshot.get("run"):
+            snapshot["run"]["mode"] = resolved_mode
+        return snapshot
 
     def feedback(
         self,
@@ -168,6 +203,11 @@ class ApplicationService:
             "video": f"/api/runs/{run_id}/media/video" if (publish / "video.mp4").exists() else None,
             "cover": f"/api/runs/{run_id}/media/cover" if (publish / "cover.png").exists() else None,
         }
+        live = any(
+            str((task.get("tool_name") or "")).startswith("legacy.")
+            for task in (snapshot.get("plan") or {}).get("tasks") or []
+        )
+        snapshot["run"]["mode"] = "live" if live else "demo"
         return snapshot
 
     def action(self, run_id: str, action: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -201,11 +241,16 @@ class ApplicationService:
         if not snapshot:
             raise KeyError(f"Run not found: {run_id}")
         goal = snapshot["goal"]
+        parent_live = any(
+            str((task.get("tool_name") or "")).startswith("legacy.")
+            for task in (snapshot.get("plan") or {}).get("tasks") or []
+        )
         forked = self.create_run(
             query=goal["query"],
             autonomy=goal["autonomy"],
             target_duration_seconds=goal["target_duration_seconds"],
             preferred_format=goal.get("preferred_format"),
+            mode="live" if parent_live else "demo",
         )
         child_id = forked["run"]["run_id"]
         self.store.set_parent(child_id, run_id)

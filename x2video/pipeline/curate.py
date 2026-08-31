@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,32 @@ CURATION_SCHEMA: dict[str, Any] = {
     "required": ["items"],
 }
 
-MIN_KEEP_SCORE = 5.5
+MIN_KEEP_SCORE = 6.5
+
+_FLUFF_RE = re.compile(
+    r"生活更美好|改变世界|让生活|美好生活|正能量|治愈|爱了|太酷了|冲就完了|"
+    r"感谢AI|感谢特斯拉|makes life better|changed my life",
+    re.I,
+)
+_NEWS_RE = re.compile(
+    r"发布|推出|开源|论文|融资|收购|更新|评测|宣布|下线|涨价|泄露|泄漏|赢得|击败|"
+    r"突破|禁用|封禁|召回|裁员|上市|爆料|模型|权重|基准|benchmark|launch|release|"
+    r"paper|acquire|open.?source|update|ban|recall",
+    re.I,
+)
+
+
+def is_newsworthy(text: str, translation: str = "", reason: str = "") -> bool:
+    """Drop fluff that is not a piece of news someone else needs to hear."""
+    blob = f"{text}\n{translation}\n{reason}"
+    stripped = (text or "").strip()
+    if re.match(r"(?i)^(hey\s+)?@?grok\b", stripped):
+        return False
+    if _FLUFF_RE.search(blob) and not _NEWS_RE.search(blob):
+        return False
+    if len(stripped) < 36 and not _NEWS_RE.search(blob):
+        return False
+    return True
 
 
 def _candidate_payload(c: CandidateTweet) -> dict[str, Any]:
@@ -72,14 +98,18 @@ async def score_candidates(
     llm: LLMProvider,
     exclude_pick_ids: list[str],
     top_n: int,
+    theme: str | None = None,
 ) -> list[Pick]:
     if not candidates:
         return []
     system = load_prompt("curation-prompt.md")
+    theme_line = f"本条视频主题：{theme.strip()}\n优先选贴合这个主题的资讯。\n" if theme and theme.strip() else ""
     user = (
-        "Score these candidates for a Chinese AI/tech short-video digest.\n"
+        theme_line
+        + "Score these candidates for a Chinese AI/tech short-video digest.\n"
         f"Need up to {top_n} keepers. Exclude ids already used as Picks: "
-        f"{exclude_pick_ids or []}\n\n"
+        f"{exclude_pick_ids or []}\n"
+        "只留能转述成一条消息的帖：谁做了什么。鸡汤、空泛赞美、向 grok 提问一律拒绝。\n\n"
         f"{_json_dumps({'candidates': [_candidate_payload(c) for c in candidates]})}"
     )
     messages = [
@@ -115,6 +145,8 @@ async def score_candidates(
         if reject or score < MIN_KEEP_SCORE:
             continue
         if tid in exclude_pick_ids:
+            continue
+        if not is_newsworthy(base.text, pick.translation, pick.reason):
             continue
         scored.append(pick)
     scored.sort(key=lambda p: p.score, reverse=True)
@@ -175,6 +207,8 @@ async def run_curate(
     auto: bool = True,
     indices: list[int] | None = None,
     llm: LLMProvider | None = None,
+    top_n: int | None = None,
+    theme: str | None = None,
 ) -> dict[str, Any]:
     run_dir = resolve_run_dir(cfg.work_dir, date)
     src = input_path or (run_dir / "candidates.json")
@@ -187,18 +221,20 @@ async def run_curate(
 
     owns_llm = llm is None
     llm = llm or create_llm_provider(cfg.llm)
+    keep = int(top_n or cfg.curation.top_n)
     try:
         scored = await score_candidates(
             candidates,
             llm=llm,
             exclude_pick_ids=exclude,
-            top_n=cfg.curation.top_n,
+            top_n=keep,
+            theme=theme,
         )
     finally:
         if owns_llm:
             await llm.close()
 
-    picks = select_picks(scored, top_n=cfg.curation.top_n, indices=indices)
+    picks = select_picks(scored, top_n=keep, indices=indices)
     if not picks:
         raise RuntimeError(
             "Curation produced 0 picks. Relax keywords or hard_filter, "

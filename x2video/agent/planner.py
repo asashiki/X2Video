@@ -83,6 +83,9 @@ def build_compatibility_plan(goal: ContentGoal) -> RunPlan:
         run_id=goal.run_id,
         format="news_recap",
         tasks=tasks,
-        decision_summary="Compatibility Plan：由 Agent Kernel 追踪并调用 v0.1 pipeline Tools。",
+        decision_summary=(
+            f"使用已配置的 X 数据源抓取热点，走原速览管线做成片；"
+            f"{goal.autonomy} 自治；目标 {goal.target_duration_seconds} 秒。"
+        ),
         human_gates=[] if goal.autonomy == "auto" else ["Gate 1", "Gate 2"],
     )

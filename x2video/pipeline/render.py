@@ -14,7 +14,13 @@ from x2video.pipeline.io import load_picks, load_script, write_json
 from x2video.pipeline.models import DigestScript, Pick
 from x2video.pipeline.workdir import resolve_run_dir, timestamp_stamp
 from x2video.tts.client import create_tts_provider
-from x2video.util import ensure_date_lead, format_md_date, split_subtitles
+from x2video.util import (
+    ensure_date_lead,
+    format_md_date,
+    is_same_day_digest,
+    split_subtitles,
+    strip_date_lead,
+)
 
 
 def ensure_ffmpeg() -> None:
@@ -49,6 +55,49 @@ def escape_subtitles_path(path: Path) -> str:
     return posix.replace("'", r"\'")
 
 
+def wrap_ass_text(text: str, *, width: int = 13) -> str:
+    """Insert ASS line breaks. Chinese has no spaces, so WrapStyle cannot wrap."""
+    clean = (text or "").replace("\n", " ").replace("\\N", " ").strip()
+    if len(clean) <= width:
+        return clean
+    lines: list[str] = []
+    buf = ""
+    for ch in clean:
+        buf += ch
+        long_enough = len(buf) >= width
+        at_break = ch in "，,、。！？!?；; "
+        if long_enough and at_break:
+            lines.append(buf)
+            buf = ""
+        elif len(buf) >= width + 3:
+            lines.append(buf)
+            buf = ""
+    if buf:
+        lines.append(buf)
+    return r"\N".join(lines) or clean
+
+
+def _ass_header() -> str:
+    return (
+        "[Script Info]\n"
+        "ScriptType: v4.00+\n"
+        "PlayResX: 1080\n"
+        "PlayResY: 1920\n"
+        "WrapStyle: 0\n"
+        "\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+        "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
+        "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        "Style: Default,Microsoft YaHei,46,&H00FFFFFF,&H000000FF,&H80101010,"
+        "&H80000000,0,0,0,0,100,100,0,0,1,3,0,2,96,96,260,1\n"
+        "\n"
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    )
+
+
 def format_ass_time(seconds: float) -> str:
     seconds = max(0.0, seconds)
     h = int(seconds // 3600)
@@ -61,27 +110,10 @@ def build_ass(lines: list[str], duration: float) -> str:
     if not lines:
         lines = [" "]
     total = sum(max(len(line), 1) for line in lines)
-    header = (
-        "[Script Info]\n"
-        "ScriptType: v4.00+\n"
-        "PlayResX: 1080\n"
-        "PlayResY: 1920\n"
-        "WrapStyle: 2\n"
-        "\n"
-        "[V4+ Styles]\n"
-        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
-        "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
-        "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
-        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        "Style: Default,Microsoft YaHei,52,&H00FFFFFF,&H000000FF,&H80101010,"
-        "&H80000000,0,0,0,0,100,100,0,0,1,3,0,2,70,70,240,1\n"
-        "\n"
-        "[Events]\n"
-        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-    )
+    header = _ass_header()
     events: list[str] = []
     cursor = 0.0
-    cleaned = [line.replace("\n", " ").replace("{", "(").replace("}", ")") for line in lines]
+    cleaned = [wrap_ass_text(line.replace("\n", " ").replace("{", "(").replace("}", ")")) for line in lines]
     for i, text in enumerate(cleaned):
         share = max(len(text), 1) / total
         length = max(duration * share, 0.8)
@@ -107,12 +139,13 @@ def compose_segment(
     output: Path,
     duration: float,
 ) -> Path:
-    dur = max(duration, 0.4)
+    # Still frame on purpose. A 1px-per-several-frames Ken Burns pan reads as
+    # stuttering crawl at 30 fps because crop x/y are integer pixels.
     vf = (
-        "scale=1166:2074,"
-        f"crop=1080:1920:min(86*t/{dur:.3f}\\,86):min(154*t/{dur:.3f}\\,154),"
+        "scale=1080:1920:force_original_aspect_ratio=increase,"
+        "crop=1080:1920,"
         "format=yuv420p,"
-        f"fade=t=in:st=0:d=0.05,"
+        "fade=t=in:st=0:d=0.05,"
         f"subtitles='{escape_subtitles_path(ass_path)}'"
     )
     cmd = [
@@ -175,27 +208,10 @@ def concat_videos(parts: list[Path], output: Path) -> Path:
 
 
 def build_ass_cues(cues: list[tuple[str, float, float]]) -> str:
-    header = (
-        "[Script Info]\n"
-        "ScriptType: v4.00+\n"
-        "PlayResX: 1080\n"
-        "PlayResY: 1920\n"
-        "WrapStyle: 2\n"
-        "\n"
-        "[V4+ Styles]\n"
-        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
-        "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
-        "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
-        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        "Style: Default,Microsoft YaHei,52,&H00FFFFFF,&H000000FF,&H80101010,"
-        "&H80000000,0,0,0,0,100,100,0,0,1,3,0,2,70,70,240,1\n"
-        "\n"
-        "[Events]\n"
-        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-    )
+    header = _ass_header()
     events: list[str] = []
     for text, start, end in cues:
-        clean = text.replace("\n", " ").replace("{", "(").replace("}", ")")
+        clean = wrap_ass_text(text.replace("\n", " ").replace("{", "(").replace("}", ")"))
         if end <= start:
             end = start + 0.3
         events.append(
@@ -404,16 +420,19 @@ async def run_render(
     clips: list[Path] = []
     try:
         opener = script.opener_text()
-        today = format_md_date()
+        same_day = is_same_day_digest(picks)
+        opener_date = (
+            format_md_date(picks[0].created_at) if same_day and picks else "近几日"
+        )
         if opener:
             opener_png = cards / "opener.png"
-            opener_spoken = ensure_date_lead(opener, today)
+            opener_spoken = strip_date_lead(opener)
             await asyncio.to_thread(
                 render_opener,
-                opener,
+                opener_spoken,
                 opener_png,
                 count=len(script.segments),
-                date_label=today,
+                date_label=opener_date,
             )
             audio, cues, duration = await synthesize_aligned(
                 tts, opener_spoken, work_audio, "opener"
@@ -439,8 +458,10 @@ async def run_render(
                 card_png = pngs[min(i, len(pngs) - 1)]
             else:
                 card_png = _card_for_pick(cards, pick)
-            item_date = format_md_date(pick.created_at if pick else "")
-            spoken_text = ensure_date_lead(spoken_text, item_date)
+            spoken_text = strip_date_lead(spoken_text)
+            if not same_day:
+                item_date = format_md_date(pick.created_at if pick else "")
+                spoken_text = ensure_date_lead(spoken_text, item_date)
             audio, cues, duration = await synthesize_aligned(
                 tts, spoken_text, work_audio, f"seg_{i:02d}"
             )
@@ -485,7 +506,11 @@ async def run_render(
         render_cover,
         cover,
         title=title,
-        date_label=format_md_date(),
+        date_label=(
+            format_md_date(picks[0].created_at)
+            if is_same_day_digest(picks) and picks
+            else "近几日"
+        ),
         sub=sub,
         bg_style=bg_style,
     )

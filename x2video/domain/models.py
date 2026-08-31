@@ -228,7 +228,7 @@ class ScenePlan(BaseModel):
     template: str
     duration_seconds: float
     crop_strategy: str = "contain"
-    motion: str = "subtle_push"
+    motion: str = "static"
     overlay_text: list[str] = Field(default_factory=list)
     safe_area_profile: str = "vertical_standard"
     transition: str = "cut"

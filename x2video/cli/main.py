@@ -97,6 +97,29 @@ def feedback(
     typer.echo(f"feedback={result['feedback_id']} memory={result.get('memory_id', 'none')} status=pending")
 
 
+def _available_studio_port(host: str, preferred: int) -> int:
+    """Bind the requested port, then fall back when Windows has reserved it."""
+    import socket
+
+    candidates = [preferred]
+    for extra in (8877, 8788, 18765, 9765, preferred + 1, preferred + 2):
+        if extra not in candidates and 1 <= extra <= 65535:
+            candidates.append(extra)
+    errors: list[str] = []
+    for candidate in candidates:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.bind((host, candidate))
+        except OSError as exc:
+            errors.append(f"{candidate}: {exc}")
+            continue
+        finally:
+            sock.close()
+        return candidate
+    detail = "; ".join(errors[:3]) or "no ports tried"
+    raise RuntimeError(f"Could not bind Studio on {host} ({detail})")
+
+
 @app.command("studio")
 def studio(
     host: str = typer.Option("127.0.0.1", help="Bind address; local-only by default"),
@@ -106,4 +129,10 @@ def studio(
     """Start the FastAPI control plane and packaged React Studio."""
     import uvicorn
 
-    uvicorn.run("x2video.api.app:app", host=host, port=port, reload=reload)
+    bound = _available_studio_port(host, port)
+    if bound != port:
+        console.print(
+            f"[yellow]Port {port} is unavailable on this machine; Studio is using {bound}.[/yellow]"
+        )
+    console.print(f"Studio: http://{host}:{bound}")
+    uvicorn.run("x2video.api.app:app", host=host, port=bound, reload=reload)

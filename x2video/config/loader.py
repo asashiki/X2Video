@@ -95,6 +95,37 @@ def _apply_tts_aliases(result: dict) -> None:
     for env_key, field in _TTS_ALIASES.items():
         if env_key in os.environ:
             tts[field] = os.environ[env_key]
+    _apply_machine_tts_env(tts)
+
+
+def _apply_machine_tts_env(tts: dict) -> None:
+    """Pick up a preconfigured T2A endpoint already on the machine.
+
+    Keys stay vendor-neutral in TOML. If the operator already exported a
+    T2A base URL and key, use them unless TTS_PROVIDER was set explicitly.
+    """
+    explicit = os.environ.get("TTS_PROVIDER") or os.environ.get("X2VIDEO_TTS_PROVIDER")
+    base = os.environ.get("MINIMAX_API_BASE_URL") or os.environ.get("X2VIDEO_TTS_API_BASE_URL")
+    china_key = os.environ.get("MINIMAX_CN_API_KEY")
+    intl_key = os.environ.get("MINIMAX_API_KEY")
+    if base and "minimaxi.com" in base:
+        key = china_key or intl_key
+    else:
+        key = intl_key or china_key
+    voice = os.environ.get("MINIMAX_VOICE_ID_MAI") or os.environ.get("MINIMAX_VOICE_ID")
+    if not key or not base:
+        return
+    if not explicit:
+        tts["provider"] = "api"
+    if tts.get("provider") != "api":
+        return
+    tts["api_base_url"] = base
+    tts["api_key"] = key
+    if voice:
+        tts["api_voice"] = voice
+    tts.setdefault("api_model", "speech-2.6-hd")
+    tts.setdefault("api_format", "mp3")
+    tts.setdefault("api_timeout_seconds", 120)
 
 
 def _env_override(base: dict, prefix: str = "X2VIDEO_") -> dict:

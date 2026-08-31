@@ -14,6 +14,23 @@ from x2video.source.factory import create_source
 from x2video.source.models import CandidateTweet
 
 
+def choose_fetch_pool(
+    raw: list[CandidateTweet],
+    ledger: Ledger,
+    *,
+    skip_ledger: bool = False,
+) -> list[CandidateTweet]:
+    """Keep new posts first. If everything was already fetched, reuse unpicked ones.
+
+    Already-made Picks stay excluded so the same digest is not rebuilt.
+    """
+    not_picked = [c for c in raw if not ledger.is_pick(c.id)]
+    if skip_ledger:
+        return not_picked
+    unseen = [c for c in not_picked if not ledger.is_seen(c.id)]
+    return unseen or not_picked
+
+
 def run_fetch(
     cfg: X2VideoConfig,
     *,
@@ -45,10 +62,10 @@ def run_fetch(
         time_window_hours=hf.time_window_hours,
         max_results=max(limit * 2, limit),
     )
+    if not raw:
+        raise RuntimeError("X 搜索没有返回帖子。到「设置与诊断」看数据源是否已登录。")
 
-    pool = raw
-    if not skip_ledger:
-        pool = [c for c in pool if not ledger.is_seen(c.id)]
+    pool = choose_fetch_pool(raw, ledger, skip_ledger=skip_ledger)
 
     filtered: list[CandidateTweet]
     if skip_hard_filter:
@@ -60,7 +77,7 @@ def run_fetch(
     filtered = filtered[:limit]
     if not filtered:
         raise RuntimeError(
-            "fetch kept 0 candidates. Relax [hard_filter] or add keywords."
+            f"搜到 {len(raw)} 条，去重后 {len(pool)} 条，互动门槛筛完 0 条。今天可能没有够热的新帖。"
         )
 
     ledger.mark_seen(c.id for c in raw)

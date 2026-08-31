@@ -8,6 +8,7 @@ import os
 import typer
 
 from x2video.application import ApplicationService
+from x2video.config.loader import load_config
 
 app = typer.Typer(help="Create and execute bounded Agent Studio runs")
 
@@ -19,15 +20,28 @@ def run_agent(
     duration: int = typer.Option(60, min=15, max=600, help="Target duration in seconds"),
     wait: bool = typer.Option(True, "--wait/--background", help="Wait for the current run state"),
     work_dir: str = typer.Option(None, help="Agent control-plane directory"),
+    demo: bool = typer.Option(False, "--demo", help="Force offline Demo fixtures"),
+    live: bool = typer.Option(False, "--live", help="Force the configured X source + original pipeline"),
 ) -> None:
-    """Create a versioned Goal and execute its bounded plan using Demo fixtures."""
+    """Create a Goal and run it. Uses the original X pipeline when SuperGrok is logged in."""
     if autonomy not in {"supervised", "assisted", "auto"}:
         raise typer.BadParameter("must be supervised, assisted, or auto", param_hint="autonomy")
-    service = ApplicationService(work_dir=work_dir or os.environ.get("X2VIDEO_WORK_DIR", "work"))
+    if demo and live:
+        raise typer.BadParameter("use either --demo or --live", param_hint="live")
+    try:
+        config = load_config()
+    except Exception:
+        config = None
+    service = ApplicationService(
+        work_dir=work_dir or os.environ.get("X2VIDEO_WORK_DIR", "work"),
+        config=config,
+    )
+    mode = "demo" if demo else "live" if live else None
     snapshot = service.create_run(
         query=goal,
         autonomy=autonomy,
         target_duration_seconds=duration,
+        mode=mode,
     )
     run_id = snapshot["run"]["run_id"]
     if wait:

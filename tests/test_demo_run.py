@@ -30,6 +30,8 @@ async def test_demo_run_proves_evidence_patch_and_repair(tmp_path: Path) -> None
     run_dir = tmp_path / "agent_runs" / "run_demo"
     script = (run_dir / "script.final.json").read_text(encoding="utf-8")
     assert "全面开放" not in script
+    assert "向部分账号向部分账号" not in script
+    assert "向部分账号逐步开放" in script
     manifest = (run_dir / "publish_kit" / "render_manifest.json").read_text(encoding="utf-8")
     assert '"subtitle_bottom": 1620' in manifest
     assert (run_dir / "publish_kit" / "video.mp4").stat().st_size > 10_000

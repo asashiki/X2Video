@@ -11,7 +11,14 @@ from x2video.pipeline.io import load_picks, write_script
 from x2video.pipeline.models import DigestScript, ScriptSegment
 from x2video.pipeline.prompts import load_prompt
 from x2video.pipeline.workdir import resolve_run_dir
-from x2video.util import ensure_date_lead, format_md_date, parse_json_payload, split_subtitles
+from x2video.util import (
+    ensure_date_lead,
+    format_md_date,
+    is_same_day_digest,
+    parse_json_payload,
+    split_subtitles,
+    strip_date_lead,
+)
 
 SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -70,6 +77,21 @@ def script_to_markdown(script: DigestScript) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def apply_script_dates(script: DigestScript, date_by_id: dict[str, str]) -> DigestScript:
+    """Same calendar day: no date in item VO. Mixed days: each item carries its own date."""
+    labels = [label for label in date_by_id.values() if label]
+    same_day = len(set(labels)) <= 1
+    script.hook = strip_date_lead(script.hook)
+    for segment in script.segments:
+        stripped = strip_date_lead(segment.narration)
+        if same_day:
+            segment.narration = stripped
+        else:
+            segment.narration = ensure_date_lead(stripped, date_by_id.get(segment.pick_id, ""))
+        segment.subtitle_lines = split_subtitles(segment.narration)
+    return script
+
+
 def _coerce_script(
     raw: Any,
     pick_ids: list[str],
@@ -90,8 +112,7 @@ def _coerce_script(
         narration = str(item.get("narration") or item.get("text") or "").strip()
         if not narration:
             continue
-        label = (date_by_id or {}).get(pid, "")
-        narration = ensure_date_lead(narration, label)
+        narration = strip_date_lead(narration)
         subs = item.get("subtitle_lines") or []
         if not isinstance(subs, list) or not subs:
             subs = split_subtitles(narration)
@@ -102,14 +123,15 @@ def _coerce_script(
         raise ValueError("Script model returned empty narration.")
     titles = raw.get("title_suggestions") or raw.get("titles") or []
     tags = raw.get("tags") or []
-    return DigestScript(
-        hook=str(raw.get("hook") or "").strip(),
+    script = DigestScript(
+        hook=strip_date_lead(str(raw.get("hook") or "").strip()),
         outro=str(raw.get("outro") or "").strip(),
         segments=segments,
         title_suggestions=[str(t).strip() for t in titles if str(t).strip()][:3],
         description=str(raw.get("description") or "").strip(),
         tags=[str(t).lstrip("#").strip() for t in tags if str(t).strip()],
     )
+    return apply_script_dates(script, date_by_id or {})
 
 
 async def run_script(
@@ -118,6 +140,7 @@ async def run_script(
     date: str | None = None,
     input_path: Path | None = None,
     output_path: Path | None = None,
+    target_duration_seconds: int | None = None,
 ) -> dict[str, Any]:
     run_dir = resolve_run_dir(cfg.work_dir, date)
     src = input_path or (run_dir / "picks.json")
@@ -128,8 +151,13 @@ async def run_script(
         raise ValueError("No picks to write a script for.")
 
     system = load_prompt("script-prompt.md")
+    same_day = is_same_day_digest(picks)
+    target = max(20, int(target_duration_seconds or 60))
+    per = max(12, round(target / max(len(picks), 1)))
     payload = {
         "n": len(picks),
+        "same_day": same_day,
+        "target_duration_seconds": target,
         "picks": [
             {
                 "id": p.id,
@@ -152,9 +180,14 @@ async def run_script(
         {
             "role": "user",
             "content": (
-                f"写一条外网热帖速览口播，N={len(picks)}。"
-                "营销号报新闻口吻。每条第一句必须带 date_label（几月几号）。"
-                "每条十几秒，合计大约两分钟。只输出 JSON。\n\n"
+                f"写一条外网热帖速览口播，N={len(picks)}，目标总时长 {target} 秒。"
+                f"每条大约 {per} 秒。N 少就每条多说，把事情讲完，不要整条视频只有十几秒。"
+                + (
+                    "全部是同一天的帖：开场和条目都不要念几月几号，日期只出现在画面上。"
+                    if same_day
+                    else "不是同一天：开场不要念日期，每条口播第一句带该帖自己的 date_label。"
+                )
+                + "只输出 JSON。\n\n"
                 + json.dumps(payload, ensure_ascii=False, indent=2)
             ),
         },

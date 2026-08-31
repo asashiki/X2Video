@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 
 from x2video.application import ApplicationService
+from x2video.config.loader import load_config
 
 
 def main() -> None:
@@ -13,7 +14,11 @@ def main() -> None:
     parser.add_argument("--work-dir", required=True)
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args()
-    service = ApplicationService(work_dir=args.work_dir, db_path=args.db)
+    try:
+        config = load_config()
+    except Exception:
+        config = None
+    service = ApplicationService(work_dir=args.work_dir, db_path=args.db, config=config)
     service.execute_sync(args.run_id)
 
 

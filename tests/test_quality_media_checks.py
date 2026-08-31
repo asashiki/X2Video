@@ -1,7 +1,15 @@
 import subprocess
 from pathlib import Path
 
-from x2video.tools.content import _probe_media_checks
+from x2video.tools.content import _demo_fonts, _probe_media_checks
+
+
+def test_demo_fonts_resolve_on_this_machine() -> None:
+    regular, bold = _demo_fonts()
+    assert "fontfile" not in regular
+    assert regular.startswith("'")
+    assert bold.startswith("'")
+    assert ":" not in regular.replace(r"\:", "")
 
 
 def test_ffmpeg_detects_black_frame_and_silence(tmp_path: Path) -> None:
