@@ -1,3 +1,11 @@
+# 大概能自动量产这种视频
+
+https://github.com/user-attachments/assets/90e42a32-74dc-4e23-ba29-7dbdc36e5b94
+
+<img width="3733" height="1757" alt="544d7323d29c7eb6af51f290faded207" src="https://github.com/user-attachments/assets/c2674e35-75dc-477e-a011-39ad0d1c1213" />
+<img width="3733" height="1757" alt="544d7323d29c7eb6af51f290faded207" src="https://github.com/user-attachments/assets/b160c706-20e8-4b39-9e45-543953ce841b" />
+
+
 # X2Video Agent Studio
 
 把一个自然语言内容目标变成可追溯、可审查、可修复的竖屏视频 Publish Kit。v0.2 在保留 v0.1 CLI 和确定性视频管线的基础上，加入有边界 Content Director、EvidencePack、编辑组合、脚本 Critic、成片 QC、局部修复和本地 Agent Studio。
